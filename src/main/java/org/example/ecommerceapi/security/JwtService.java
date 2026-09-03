@@ -2,11 +2,13 @@ package org.example.ecommerceapi.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import java.util.Base64;
 import java.util.Date;
 
 @Service
@@ -15,7 +17,7 @@ public class JwtService {
     private long ms;
 
     @Value("${jwt.secret}")
-    private SecretKey secretKey;
+    private String secretKey;
 
 
     public String generateToken(UserDetails userDetails) {
@@ -24,13 +26,13 @@ public class JwtService {
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date(timeNow))
                 .expiration(new Date(timeNow + ms))
-                .signWith(secretKey)
+                .signWith(getSignInKey())
                 .compact();
     }
 
     public Claims extractAllClaims(String token) {
         return Jwts.parser()
-                .verifyWith(secretKey)
+                .verifyWith(getSignInKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
@@ -47,11 +49,13 @@ public class JwtService {
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        if (extractUsername(token).equals(userDetails.getUsername())
-                && extractExpiration(token).after(new Date(System.currentTimeMillis()))) {
-            return true;
-        } else {
-            return false;
-        }
+        return extractUsername(token).equals(userDetails.getUsername())
+                && extractExpiration(token).after(new Date(System.currentTimeMillis()));
+    }
+
+
+    private SecretKey getSignInKey(){
+        byte[] decodedKey = Base64.getDecoder().decode(this.secretKey);
+        return Keys.hmacShaKeyFor(decodedKey);
     }
 }
