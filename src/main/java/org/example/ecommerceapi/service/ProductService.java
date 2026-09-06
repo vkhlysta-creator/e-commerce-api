@@ -13,7 +13,7 @@ import java.util.List;
 public class ProductService {
     private ProductRepository repository;
 
-    public ProductService (ProductRepository repository) {
+    public ProductService(ProductRepository repository) {
         this.repository = repository;
     }
 
@@ -38,6 +38,18 @@ public class ProductService {
         return new ProductResponse(
                 createdProduct.getId(), createdProduct.getName(), createdProduct.getDescription(), createdProduct.getPrice(), createdProduct.getInventory()
         );
+    }
+
+    public List<ProductResponse> findByNameContaining(String name) {
+        List<Product> products = repository.findProductByNameContainingIgnoreCase(name);
+
+        return products.stream()
+                .map(product -> new ProductResponse(
+                                product.getId(), product.getName(), product.getDescription(), product.getPrice(), product.getInventory()
+                        )
+                )
+                .toList();
+
     }
 
 

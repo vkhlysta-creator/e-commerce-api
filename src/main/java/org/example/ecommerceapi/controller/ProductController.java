@@ -28,4 +28,9 @@ public class ProductController {
     public ResponseEntity<ProductResponse> createProduct(@RequestBody @Valid ProductRequest request){
         return ResponseEntity.ok(productService.createNewProduct(request));
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<ProductResponse>> findByNameContaining(@RequestParam("query") String query){
+        return ResponseEntity.ok(productService.findByNameContaining(query));
+    }
 }
