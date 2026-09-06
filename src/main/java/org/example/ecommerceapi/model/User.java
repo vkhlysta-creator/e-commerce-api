@@ -14,29 +14,16 @@ import java.util.List;
 @Table(name = "users")
 public class User implements UserDetails {
 
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
 
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
+    public User(){}
+    public User(String email, String password, Role role){
+        this.email = email;
+        this.password = password;
+        this.role = role;
     }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return true;
-    }
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return  List.of(new SimpleGrantedAuthority("ROLE_" + role));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role));
     }
 
     @Override
@@ -48,6 +35,7 @@ public class User implements UserDetails {
     public String getUsername() {
         return email;
     }
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -62,7 +50,6 @@ public class User implements UserDetails {
     @Column()
     @Enumerated(EnumType.STRING)
     private Role role;
-
 
 
 }
