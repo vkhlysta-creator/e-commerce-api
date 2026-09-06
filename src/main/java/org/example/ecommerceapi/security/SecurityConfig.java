@@ -2,6 +2,7 @@ package org.example.ecommerceapi.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -25,6 +26,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(
                         auth -> auth
                                 .requestMatchers("/api/auth/**")
+                                .permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/products")
+                                .hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/api/products")
                                 .permitAll()
                                 .anyRequest()
                                 .authenticated()
