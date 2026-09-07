@@ -3,7 +3,6 @@ package org.example.ecommerceapi.controller;
 import jakarta.validation.Valid;
 import org.example.ecommerceapi.dto.ProductRequest;
 import org.example.ecommerceapi.dto.ProductResponse;
-import org.example.ecommerceapi.model.Product;
 import org.example.ecommerceapi.service.ProductService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,5 +31,21 @@ public class ProductController {
     @GetMapping("/search")
     public ResponseEntity<List<ProductResponse>> findByNameContaining(@RequestParam("query") String query){
         return ResponseEntity.ok(productService.findByNameContaining(query));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductResponse> findById(@PathVariable("id") Long id){
+        return ResponseEntity.ok(productService.findById(id));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ProductResponse> updateProduct(@PathVariable("id") Long id, @RequestBody @Valid ProductRequest request){
+        return ResponseEntity.ok(productService.updateProduct(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable("id") Long id){
+        productService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

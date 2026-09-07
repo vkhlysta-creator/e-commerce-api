@@ -30,7 +30,7 @@ public class GeneralExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorDto> fallbackHandleException(Exception ex){
+    public ResponseEntity<ErrorDto> fallbackHandleException(){
         return ResponseEntity.internalServerError().body(
                 new ErrorDto(
                         Timestamp.valueOf(LocalDateTime.now()),
@@ -38,5 +38,10 @@ public class GeneralExceptionHandler {
                         "Internal Server Error"
                 )
         );
+    }
+
+    @ExceptionHandler(ProductNotFoundException.class)
+    public ResponseEntity<Void> handleProductNotFoundException(){
+        return ResponseEntity.notFound().build();
     }
 }
