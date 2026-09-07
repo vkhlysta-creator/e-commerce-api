@@ -1,6 +1,5 @@
 package org.example.ecommerceapi.service;
 
-import jakarta.persistence.EntityNotFoundException;
 import org.example.ecommerceapi.dto.ProductRequest;
 import org.example.ecommerceapi.dto.ProductResponse;
 import org.example.ecommerceapi.exception.ProductNotFoundException;
@@ -9,13 +8,12 @@ import org.example.ecommerceapi.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @Transactional
 public class ProductService {
-    private ProductRepository repository;
+    private final ProductRepository repository;
 
     public ProductService(ProductRepository repository) {
         this.repository = repository;
@@ -82,7 +80,7 @@ public class ProductService {
     }
 
     public void deleteById(Long id){
-        Product fetchedProduct = repository.findById(id).orElseThrow(() -> new ProductNotFoundException("Product wasn't found"));
+        repository.findById(id).orElseThrow(() -> new ProductNotFoundException("Product wasn't found"));
         repository.deleteById(id);
     }
 
