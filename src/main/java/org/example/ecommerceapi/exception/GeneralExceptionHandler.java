@@ -40,7 +40,7 @@ public class GeneralExceptionHandler {
         );
     }
 
-    @ExceptionHandler(ProductNotFoundException.class)
+    @ExceptionHandler({ProductNotFoundException.class, UserNotFoundException.class})
     public ResponseEntity<Void> handleProductNotFoundException(){
         return ResponseEntity.notFound().build();
     }
