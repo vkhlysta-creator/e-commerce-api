@@ -62,6 +62,10 @@ public class Order {
         return user;
     }
 
+    public List<OrderItem> getItems() {
+        return items;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }

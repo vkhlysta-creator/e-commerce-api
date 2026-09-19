@@ -40,6 +40,18 @@ public class GeneralExceptionHandler {
         );
     }
 
+    @ExceptionHandler(OutOfStockException.class)
+    public ResponseEntity<ErrorDto> handleOutOfStockException(OutOfStockException ex){
+        return ResponseEntity.unprocessableContent().body(
+                new ErrorDto(
+                        Timestamp.valueOf(LocalDateTime.now()),
+                        HttpStatus.UNPROCESSABLE_CONTENT,
+                        ex.getMessage()
+                )
+        );
+
+    }
+
     @ExceptionHandler({ProductNotFoundException.class, UserNotFoundException.class, CartItemNotFoundException.class})
     public ResponseEntity<Void> handleProductNotFoundException(){
         return ResponseEntity.notFound().build();
