@@ -35,6 +35,12 @@ public class SecurityConfig {
                                 .hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.DELETE, "/api/products/**")
                                 .hasRole("ADMIN")
+                                .requestMatchers(
+                                        "/v3/api-docs/**",
+                                        "/swagger-ui/**",
+                                        "/swagger-ui.html"
+                                )
+                                .permitAll()
                                 .anyRequest()
                                 .authenticated()
                         )

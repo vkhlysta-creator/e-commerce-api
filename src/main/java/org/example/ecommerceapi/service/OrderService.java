@@ -8,7 +8,6 @@ import org.example.ecommerceapi.model.*;
 import org.example.ecommerceapi.model.enums.OrderStatus;
 import org.example.ecommerceapi.repository.CartItemRepository;
 import org.example.ecommerceapi.repository.OrderRepository;
-import org.example.ecommerceapi.repository.ProductRepository;
 import org.example.ecommerceapi.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,18 +23,15 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final CartItemRepository cartItemRepository;
-    private final ProductRepository productRepository;
 
     public OrderService(
             OrderRepository orderRepository,
             UserRepository userRepository,
-            CartItemRepository cartItemRepository,
-            ProductRepository productRepository
+            CartItemRepository cartItemRepository
     ) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.cartItemRepository = cartItemRepository;
-        this.productRepository = productRepository;
     }
 
     public OrderDto checkout(String userEmail) {
