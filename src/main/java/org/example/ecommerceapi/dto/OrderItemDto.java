@@ -5,5 +5,4 @@ import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 
-public record CartItemDto(@NotNull Long productId, @NotBlank String name,@NotNull BigDecimal price,@NotNull int quantity) {
-}
+public record OrderItemDto(@NotNull Long productId, @NotBlank String name,@NotNull BigDecimal price,@NotNull int quantity) {}

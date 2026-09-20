@@ -1,4 +1,6 @@
 package org.example.ecommerceapi.dto;
 
-public record CartItemRequest(Long productId, int quantity) {
+import jakarta.validation.constraints.NotNull;
+
+public record CartItemRequest(@NotNull Long productId,@NotNull int quantity) {
 }

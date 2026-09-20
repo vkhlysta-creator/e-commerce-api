@@ -43,7 +43,7 @@ public class CartService {
 
         cartItemRepository.save(cartItem);
 
-        return new CartItemDto(cartItem.getProduct().getId(), cartItem.getProduct().getName(), cartItem.getProduct().getPrice(), cartItem.getQuantity());
+        return new CartItemDto(productId, foundProduct.getName(), foundProduct.getPrice(), cartItem.getQuantity());
 
     }
 

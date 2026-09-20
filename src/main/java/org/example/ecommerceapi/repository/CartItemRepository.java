@@ -13,11 +13,9 @@ import java.util.Optional;
 
 @Repository
 public interface CartItemRepository extends JpaRepository<CartItem, Long> {
-    @Modifying
+
     @Query("SELECT c FROM CartItem c JOIN FETCH c.product WHERE c.user = :user")
     List<CartItem> getCartItemsByUser(User user);
 
-    @Modifying
-    @Query("SELECT c FROM CartItem c JOIN FETCH c.product WHERE c.user = :user AND c.product = :product")
     Optional<CartItem> getCartItemByUserAndProduct(User user, Product product);
 }
