@@ -1,15 +1,13 @@
 package org.example.ecommerceapi.controller;
 
 import com.stripe.exception.StripeException;
+import org.example.ecommerceapi.dto.PaymentConfirmRequest;
 import org.example.ecommerceapi.dto.PaymentResponse;
 import org.example.ecommerceapi.model.User;
 import org.example.ecommerceapi.service.PaymentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -23,6 +21,16 @@ public class PaymentController {
     public ResponseEntity<PaymentResponse> createIntent(@AuthenticationPrincipal User user, @PathVariable("orderId") Long orderId){
         try {
             return ResponseEntity.ok(paymentService.createPaymentIntent(orderId, user.getUsername()));
+        } catch (StripeException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @PostMapping("/confirm")
+    public ResponseEntity<String> confirmPayment(@RequestBody PaymentConfirmRequest request){
+        try {
+            paymentService.confirmPayment(request.paymentIntentId());
+            return ResponseEntity.ok("Payment confirmed successfully");
         } catch (StripeException e) {
             throw new RuntimeException(e);
         }
