@@ -1,5 +1,6 @@
 package org.example.ecommerceapi.controller;
 
+import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
 import org.example.ecommerceapi.dto.PaymentConfirmRequest;
 import org.example.ecommerceapi.dto.PaymentResponse;
@@ -32,6 +33,19 @@ public class PaymentController {
             paymentService.confirmPayment(request.paymentIntentId());
             return ResponseEntity.ok("Payment confirmed successfully");
         } catch (StripeException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @PostMapping("/webhook")
+    public ResponseEntity<String> handleWebHook(
+            @RequestBody String payLoad,
+            @RequestHeader("Stripe-Signature") String sigHeader
+    ){
+        try {
+            paymentService.handleWebHook(payLoad, sigHeader);
+            return ResponseEntity.ok().build();
+        } catch (SignatureVerificationException e) {
             throw new RuntimeException(e);
         }
     }
