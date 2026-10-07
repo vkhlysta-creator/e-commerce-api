@@ -57,4 +57,22 @@ public class GeneralExceptionHandler {
     public ResponseEntity<Void> handleProductNotFoundException(Exception ex){
         return ResponseEntity.notFound().build();
     }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorDto> handleIllegalState(IllegalStateException ex) {
+        return ResponseEntity.badRequest().body(new ErrorDto(
+                Timestamp.valueOf(LocalDateTime.now()),
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage()
+        ));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorDto> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorDto(
+                Timestamp.valueOf(LocalDateTime.now()),
+                HttpStatus.CONFLICT,
+                ex.getMessage()
+    ));
+    }
 }

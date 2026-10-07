@@ -15,10 +15,12 @@ import org.example.ecommerceapi.model.enums.OrderStatus;
 import org.example.ecommerceapi.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
 @Service
+@Transactional
 public class PaymentService {
     private final OrderRepository orderRepository;
     @Value("${stripe.api.key}")
@@ -36,6 +38,7 @@ public class PaymentService {
     }
 
 
+    @Transactional(readOnly = true)
     public PaymentResponse createPaymentIntent(Long orderId, String userEmail) throws StripeException {
         Order foundOrder = orderRepository.findById(orderId).orElseThrow(() -> new IllegalArgumentException("Order wasn't found!"));
         if (!foundOrder.getUser().getUsername().equals(userEmail)){
