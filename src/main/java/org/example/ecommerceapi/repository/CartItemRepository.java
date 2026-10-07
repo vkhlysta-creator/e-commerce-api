@@ -4,7 +4,6 @@ import org.example.ecommerceapi.model.CartItem;
 import org.example.ecommerceapi.model.Product;
 import org.example.ecommerceapi.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 

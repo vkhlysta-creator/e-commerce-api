@@ -30,7 +30,8 @@ public class GeneralExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorDto> fallbackHandleException(){
+    public ResponseEntity<ErrorDto> fallbackHandleException(Exception ex){
+        ex.printStackTrace();
         return ResponseEntity.internalServerError().body(
                 new ErrorDto(
                         Timestamp.valueOf(LocalDateTime.now()),
@@ -53,7 +54,7 @@ public class GeneralExceptionHandler {
     }
 
     @ExceptionHandler({ProductNotFoundException.class, UserNotFoundException.class, CartItemNotFoundException.class})
-    public ResponseEntity<Void> handleProductNotFoundException(){
+    public ResponseEntity<Void> handleProductNotFoundException(Exception ex){
         return ResponseEntity.notFound().build();
     }
 }

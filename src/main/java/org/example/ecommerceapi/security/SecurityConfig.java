@@ -41,6 +41,8 @@ public class SecurityConfig {
                                         "/swagger-ui.html"
                                 )
                                 .permitAll()
+                                .requestMatchers("/api/payments/webhook")
+                                .permitAll()
                                 .anyRequest()
                                 .authenticated()
                         )
