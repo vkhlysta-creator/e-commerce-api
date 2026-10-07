@@ -38,7 +38,6 @@ public class PaymentService {
     }
 
 
-    @Transactional(readOnly = true)
     public PaymentResponse createPaymentIntent(Long orderId, String userEmail) throws StripeException {
         Order foundOrder = orderRepository.findById(orderId).orElseThrow(() -> new IllegalArgumentException("Order wasn't found!"));
         if (!foundOrder.getUser().getUsername().equals(userEmail)){
