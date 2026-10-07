@@ -34,4 +34,4 @@ CREATE TABLE cart_items(
     quantity INT NOT NULL ,
     user_id BIGINT NOT NULL REFERENCES users(id),
     product_id BIGINT NOT NULL REFERENCES products(id)
-)
+);

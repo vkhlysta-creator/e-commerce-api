@@ -1,6 +1,5 @@
 package org.example.ecommerceapi;
 
-import org.assertj.core.api.Assertions;
 import org.example.ecommerceapi.dto.OrderDto;
 import org.example.ecommerceapi.model.CartItem;
 import org.example.ecommerceapi.model.Product;
@@ -39,7 +38,7 @@ public class OrderServiceIntegrationTest {
         registry.add("spring.datasource.url", postgres::getJdbcUrl);
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop"); // Для тестов генерируем схему с нуля
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
     }
 
     @Autowired

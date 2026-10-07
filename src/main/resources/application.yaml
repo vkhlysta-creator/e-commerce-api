@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: e-commerce-api
+  datasource:
+    url: jdbc:postgresql://localhost:5432/e_commerce_api
+    username: my_username_super
+    password: my_password
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+    show-sql: true
+
+
+jwt:
+  secret: ${JWT_SECRET:default_super_secret_key_for_local_dev_only_12345}
+  expiration-ms: 86400000
+
+
+stripe:
+  api:
+    key: ${STRIPE_API_KEY:sk_test_placeholder}
+  webhook:
+    secret: ${STRIPE_WEBHOOK_SECRET:whsec_placeholder}
