@@ -6,12 +6,14 @@ import org.example.ecommerceapi.model.User;
 import org.example.ecommerceapi.repository.ProductRepository;
 import org.example.ecommerceapi.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 
 @Component
+@Profile({"dev", "local"})
 public class DataSeeder implements CommandLineRunner {
 
     private final UserRepository userRepository;

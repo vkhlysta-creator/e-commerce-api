@@ -14,7 +14,7 @@ import java.util.Date;
 @Service
 public class JwtService {
     @Value("${jwt.expiration-ms}")
-    private long ms;
+    private long expirationMs;
 
     @Value("${jwt.secret}")
     private String secretKey;
@@ -25,7 +25,7 @@ public class JwtService {
         return Jwts.builder()
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date(timeNow))
-                .expiration(new Date(timeNow + ms))
+                .expiration(new Date(timeNow + expirationMs))
                 .signWith(getSignInKey())
                 .compact();
     }
