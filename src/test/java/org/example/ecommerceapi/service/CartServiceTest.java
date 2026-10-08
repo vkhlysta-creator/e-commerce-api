@@ -45,52 +45,45 @@ public class CartServiceTest {
 
     @Test
     public void addProductSuccessTest() {
-        Long productId = 1L;
-        Product mockedProduct = new Product("Test-Name", "Test-Description", BigDecimal.valueOf(1000), 10);
-        mockedProduct.setId(productId);
+        Product mockedProduct = createStandardProduct();
+        mockedProduct.setInventory(4);
 
-        String email = "testemail@gmail.com";
-        User mockedUser = new User(email, "test_password", Role.USER);
-        mockedUser.setId(100L);
+        User mockedUser = createStandardUser();
 
-        when(productRepository.findById(productId)).thenReturn(Optional.of(mockedProduct));
-        when(userRepository.getUserByEmail(email)).thenReturn(Optional.of(mockedUser));
+        when(productRepository.findById(mockedProduct.getId())).thenReturn(Optional.of(mockedProduct));
+        when(userRepository.getUserByEmail(mockedUser.getUsername())).thenReturn(Optional.of(mockedUser));
 
 
         when(cartItemRepository.save(any(CartItem.class))).thenAnswer(i -> i.getArgument(0));
 
-        CartItemDto result = cartService.addProductToCart(email, productId, 3);
+        CartItemDto result = cartService.addProductToCart(mockedUser.getUsername(), mockedProduct.getId(), 3);
 
-        assertThat(result.productId()).isEqualTo(productId);
+        assertThat(result.productId()).isEqualTo(mockedProduct.getId());
 
         verify(cartItemRepository, times(1)).save(cartItemCaptor.capture());
         CartItem savedCartItem = cartItemCaptor.getValue();
 
         assertThat(savedCartItem.getQuantity()).isEqualTo(3);
-        assertThat(savedCartItem.getProduct().getId()).isEqualTo(productId);
-        assertThat(savedCartItem.getUser().getUsername()).isEqualTo(email);
+        assertThat(savedCartItem.getProduct().getId()).isEqualTo(mockedProduct.getId());
+        assertThat(savedCartItem.getUser().getUsername()).isEqualTo(mockedUser.getUsername());
     }
 
     @Test
     public void addProduct_ThrowException_WhenNotEnough() {
 
-        Long productId = 1L;
-        Product mockedProduct = new Product("Test-Name", "Test-Description", BigDecimal.valueOf(1000), 1);
-        mockedProduct.setId(productId);
+        Product mockedProduct = createStandardProduct();
 
-        String email = "testemail@gmail.com";
-        User mockedUser = new User(email, "test_password", Role.USER);
-        mockedUser.setId(100L);
+        User mockedUser = createStandardUser();
 
 
-        when(productRepository.findById(productId)).thenReturn(Optional.of(mockedProduct));
-        when(userRepository.getUserByEmail(email)).thenReturn(Optional.of(mockedUser));
+        when(productRepository.findById(mockedProduct.getId())).thenReturn(Optional.of(mockedProduct));
+        when(userRepository.getUserByEmail(mockedUser.getUsername())).thenReturn(Optional.of(mockedUser));
 
         when(cartItemRepository.getCartItemByUserAndProduct(mockedUser, mockedProduct))
                 .thenReturn(Optional.empty());
 
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> cartService.addProductToCart(email, productId, 5));
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> cartService.addProductToCart(mockedUser.getUsername(), mockedProduct.getId(), 5));
         assertThat(exception.getMessage()).contains("Not enough inventory");
         verify(cartItemRepository, never()).save(cartItemCaptor.capture());
 
@@ -99,9 +92,7 @@ public class CartServiceTest {
 
     @Test
     public void getCart_Success() {
-        String email = "testemail@gmail.com";
-        User mockedUser = new User(email, "test_password", Role.USER);
-        mockedUser.setId(100L);
+        User mockedUser = createStandardUser();
 
         Long productAId = 1L;
         Long productBId = 2L;
@@ -113,10 +104,10 @@ public class CartServiceTest {
         CartItem mockedSecondItem = new CartItem(1, mockedUser, productB);
         List<CartItem> items = List.of(mockedFirstItem, mockedSecondItem);
 
-        when(userRepository.getUserByEmail(email)).thenReturn(Optional.of(mockedUser));
+        when(userRepository.getUserByEmail(mockedUser.getUsername())).thenReturn(Optional.of(mockedUser));
         when(cartItemRepository.getCartItemsByUser(mockedUser)).thenReturn(items);
 
-        CartDto dto = cartService.getCart(email);
+        CartDto dto = cartService.getCart(mockedUser.getUsername());
 
         assertThat(dto.items().size()).isEqualTo(2);
         assertThat(dto.totalPrice()).isEqualByComparingTo(productA.getPrice().multiply(BigDecimal.TWO).add(productB.getPrice())); // 2 * productA = 2000 and 1 * product
@@ -126,34 +117,28 @@ public class CartServiceTest {
 
     @Test
     public void getEmptyCart() {
-        String email = "testemail@gmail.com";
-        User mockedUser = new User(email, "test_password", Role.USER);
-        mockedUser.setId(100L);
+        User mockedUser = createStandardUser();
 
-        when(userRepository.getUserByEmail(email)).thenReturn(Optional.of(mockedUser));
+        when(userRepository.getUserByEmail(mockedUser.getUsername())).thenReturn(Optional.of(mockedUser));
         when(cartItemRepository.getCartItemsByUser(mockedUser)).thenReturn(List.of());
-        CartDto dto = cartService.getCart(email);
+        CartDto dto = cartService.getCart(mockedUser.getUsername());
         assertThat(dto.totalPrice()).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(dto.items().size()).isEqualTo(0);
     }
 
     @Test
     public void removeProduct_Success() {
-        String email = "testemail@gmail.com";
-        User mockedUser = new User(email, "test_password", Role.USER);
-        mockedUser.setId(100L);
+        User mockedUser = createStandardUser();
 
-        Long productId = 1L;
-        Product mockedProduct = new Product("Test-Name", "Test-Description", BigDecimal.valueOf(1000), 1);
-        mockedProduct.setId(productId);
+        Product mockedProduct = createStandardProduct();
 
         CartItem mockedItem = new CartItem(2, mockedUser, mockedProduct);
 
-        when(productRepository.findById(productId)).thenReturn(Optional.of(mockedProduct));
-        when(userRepository.getUserByEmail(email)).thenReturn(Optional.of(mockedUser));
+        when(productRepository.findById(mockedProduct.getId())).thenReturn(Optional.of(mockedProduct));
+        when(userRepository.getUserByEmail(mockedUser.getUsername())).thenReturn(Optional.of(mockedUser));
         when(cartItemRepository.getCartItemByUserAndProduct(mockedUser, mockedProduct)).thenReturn(Optional.of(mockedItem));
 
-        cartService.removeProductFromCart(email, productId);
+        cartService.removeProductFromCart(mockedUser.getUsername(), mockedProduct.getId());
 
         verify(cartItemRepository, times(1)).delete(mockedItem);
 
@@ -162,19 +147,29 @@ public class CartServiceTest {
 
     @Test
     public void removeProduct_ThrowsCartItemNotFoundException(){
-        String email = "testemail@gmail.com";
-        User mockedUser = new User(email, "test_password", Role.USER);
-        mockedUser.setId(100L);
+        User mockedUser = createStandardUser();
 
-        Long productId = 1L;
-        Product mockedProduct = new Product("Test-Name", "Test-Description", BigDecimal.valueOf(1000), 1);
-        mockedProduct.setId(productId);
+        Product mockedProduct = createStandardProduct();
 
-        when(productRepository.findById(productId)).thenReturn(Optional.of(mockedProduct));
-        when(userRepository.getUserByEmail(email)).thenReturn(Optional.of(mockedUser));
+
+        when(productRepository.findById(mockedProduct.getId())).thenReturn(Optional.of(mockedProduct));
+        when(userRepository.getUserByEmail(mockedUser.getUsername())).thenReturn(Optional.of(mockedUser));
         when(cartItemRepository.getCartItemByUserAndProduct(mockedUser, mockedProduct)).thenReturn(Optional.empty());
 
-        assertThrows(CartItemNotFoundException.class, () -> cartService.removeProductFromCart(email, productId));
+        assertThrows(CartItemNotFoundException.class, () -> cartService.removeProductFromCart(mockedUser.getUsername(), mockedProduct.getId()));
         verify(cartItemRepository, never()).delete(any());
+    }
+
+
+    private User createStandardUser(){
+        User standardUser = new User("testemail@gmail.com", "test_password", Role.USER);
+        standardUser.setId(100L);
+        return standardUser;
+    }
+
+    private Product createStandardProduct(){
+        Product standardProduct = new Product("Test-Name", "Test-Description", BigDecimal.valueOf(1000), 1);
+        standardProduct.setId(1L);
+        return standardProduct;
     }
 }
