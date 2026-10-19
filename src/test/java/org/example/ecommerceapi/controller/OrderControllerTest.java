@@ -42,8 +42,8 @@ public class OrderControllerTest {
 
 
     @Test
-    public void checkout_ReturnsOk_WhenUserIsAuthenticated() throws Exception{
-        User customer = new User("buyer@gmail.com", "test-password", Role.USER );
+    public void checkout_ReturnsOk_WhenUserIsAuthenticated() throws Exception {
+        User customer = new User("buyer@gmail.com", "test-password", Role.USER);
         OrderDto orderDto = new OrderDto(10L, BigDecimal.valueOf(500), OrderStatus.PENDING, LocalDateTime.now(), List.of());
         when(orderService.checkout(customer.getUsername())).thenReturn(orderDto);
 
@@ -57,7 +57,7 @@ public class OrderControllerTest {
     }
 
     @Test
-    public void checkout_ReturnsForbidden_WhenUserIsNotAuthenticated() throws Exception{
+    public void checkout_ReturnsForbidden_WhenUserIsNotAuthenticated() throws Exception {
         mockMvc.perform(post("/api/orders/checkout"))
                 .andExpect(status().isForbidden());
 

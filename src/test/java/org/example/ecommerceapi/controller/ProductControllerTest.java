@@ -10,7 +10,6 @@ import org.example.ecommerceapi.security.SecurityConfig;
 import org.example.ecommerceapi.service.ProductService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -45,9 +44,8 @@ public class ProductControllerTest {
     private UserDetailsService userDetailsService;
 
 
-
     @Test
-    public void findById_returnsOk_WhenProductExists() throws Exception{
+    public void findById_returnsOk_WhenProductExists() throws Exception {
         when(productService.findById(1L)).thenReturn(new ProductResponse(1L, "Laptop", "Gaming laptop", BigDecimal.valueOf(1500), 5));
 
         mockMvc.perform(get("/api/products/{id}", 1L))
@@ -59,7 +57,7 @@ public class ProductControllerTest {
     }
 
     @Test
-    public void findById_ReturnsNotFound_WhenProductDoesNotExist() throws Exception{
+    public void findById_ReturnsNotFound_WhenProductDoesNotExist() throws Exception {
         when(productService.findById(999L)).thenThrow(new ProductNotFoundException("Not Found"));
 
         mockMvc.perform(get("/api/products/{id}", 999L))
@@ -67,14 +65,14 @@ public class ProductControllerTest {
     }
 
     @Test
-    public void createProduct_ReturnsBadRequest_WhenValidationFails() throws Exception{
+    public void createProduct_ReturnsBadRequest_WhenValidationFails() throws Exception {
         ProductRequest request = new ProductRequest("", "Desc", BigDecimal.valueOf(-100), 0);
 
         User adminUser = new User("test-mail", "test-password", Role.ADMIN);
 
         mockMvc.perform(
-                post("/api/products").with(user(adminUser)).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request))
-        )
+                        post("/api/products").with(user(adminUser)).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request))
+                )
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Validation failed"))
                 .andExpect(jsonPath("$.infos.name").exists())
@@ -86,7 +84,7 @@ public class ProductControllerTest {
     }
 
     @Test
-    public void deleteProduct_ReturnsNoContent() throws Exception{
+    public void deleteProduct_ReturnsNoContent() throws Exception {
         User adminUser = new User("test-mail", "test-password", Role.ADMIN);
 
         mockMvc.perform(delete("/api/products/{id}", 1L).with(user(adminUser)))
@@ -98,7 +96,7 @@ public class ProductControllerTest {
     }
 
     @Test
-    public void returnForbidden_WhenWithRoleUser() throws Exception{
+    public void returnForbidden_WhenWithRoleUser() throws Exception {
 
         User customer = new User("test-mail", "test-password", Role.USER);
 
