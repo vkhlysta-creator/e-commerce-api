@@ -5,6 +5,7 @@ import org.example.ecommerceapi.model.CartItem;
 import org.example.ecommerceapi.model.Product;
 import org.example.ecommerceapi.model.User;
 import org.example.ecommerceapi.model.enums.Role;
+import org.example.ecommerceapi.repository.AbstractIntegrationTest;
 import org.example.ecommerceapi.repository.CartItemRepository;
 import org.example.ecommerceapi.repository.ProductRepository;
 import org.example.ecommerceapi.repository.UserRepository;
@@ -25,21 +26,9 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 import java.math.BigDecimal;
 
 @SpringBootTest
-@Testcontainers
 @ActiveProfiles("test")
 @Transactional
-public class OrderServiceIntegrationTest {
-
-    @Container
-    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:15-alpine");
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
-    }
+public class OrderServiceIntegrationTest  extends AbstractIntegrationTest {
 
     @Autowired
     private OrderService orderService;
@@ -72,4 +61,7 @@ public class OrderServiceIntegrationTest {
                 .extracting(Product::getInventory)
                 .isEqualTo(1);
     }
+
+    @Test
+    void checkoutViaHttpWithRealJwt_Success(){}
 }

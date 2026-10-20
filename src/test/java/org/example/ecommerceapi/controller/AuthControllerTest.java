@@ -35,7 +35,7 @@ public class AuthControllerTest {
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Test
-    public void register_Success() throws Exception {
+    void register_Success() throws Exception {
         RegisterRequest request = new RegisterRequest("test-mail@gmail.com", "test-password");
 
         when(authService.register(request)).thenReturn(new AuthResponse("mock-jwt-token"));
@@ -63,7 +63,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void login_Success() throws Exception {
+    void login_Success() throws Exception {
         LoginRequest request = new LoginRequest("test-mail@gmail.com", "test-password");
 
         when(authService.authenticate(request)).thenReturn(new AuthResponse("mock-jwt-token"));
@@ -78,7 +78,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void login_InvalidEmail_Returns400() throws Exception {
+    void login_InvalidEmail_Returns400() throws Exception {
         LoginRequest request = new LoginRequest("not-an-email", "test-password");
 
         mockMvc.perform(post("/api/auth/login")
@@ -90,7 +90,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void login_BlankPassword_Returns400() throws Exception {
+    void login_BlankPassword_Returns400() throws Exception {
         LoginRequest request = new LoginRequest("test-mail@gmail.com", "");
 
         mockMvc.perform(post("/api/auth/login")

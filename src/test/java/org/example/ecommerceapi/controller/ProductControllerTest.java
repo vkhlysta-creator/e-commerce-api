@@ -45,7 +45,7 @@ public class ProductControllerTest {
 
 
     @Test
-    public void findById_returnsOk_WhenProductExists() throws Exception {
+    void findById_returnsOk_WhenProductExists() throws Exception {
         when(productService.findById(1L)).thenReturn(new ProductResponse(1L, "Laptop", "Gaming laptop", BigDecimal.valueOf(1500), 5));
 
         mockMvc.perform(get("/api/products/{id}", 1L))
@@ -57,7 +57,7 @@ public class ProductControllerTest {
     }
 
     @Test
-    public void findById_ReturnsNotFound_WhenProductDoesNotExist() throws Exception {
+    void findById_ReturnsNotFound_WhenProductDoesNotExist() throws Exception {
         when(productService.findById(999L)).thenThrow(new ProductNotFoundException("Not Found"));
 
         mockMvc.perform(get("/api/products/{id}", 999L))
@@ -65,7 +65,7 @@ public class ProductControllerTest {
     }
 
     @Test
-    public void createProduct_ReturnsBadRequest_WhenValidationFails() throws Exception {
+    void createProduct_ReturnsBadRequest_WhenValidationFails() throws Exception {
         ProductRequest request = new ProductRequest("", "Desc", BigDecimal.valueOf(-100), 0);
 
         User adminUser = new User("test-mail", "test-password", Role.ADMIN);
@@ -84,7 +84,7 @@ public class ProductControllerTest {
     }
 
     @Test
-    public void deleteProduct_ReturnsNoContent() throws Exception {
+    void deleteProduct_ReturnsNoContent() throws Exception {
         User adminUser = new User("test-mail", "test-password", Role.ADMIN);
 
         mockMvc.perform(delete("/api/products/{id}", 1L).with(user(adminUser)))
@@ -96,7 +96,7 @@ public class ProductControllerTest {
     }
 
     @Test
-    public void returnForbidden_WhenWithRoleUser() throws Exception {
+    void returnForbidden_WhenWithRoleUser() throws Exception {
 
         User customer = new User("test-mail", "test-password", Role.USER);
 
