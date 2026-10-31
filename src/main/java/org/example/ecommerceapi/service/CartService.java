@@ -39,7 +39,14 @@ public class CartService {
                 .getCartItemByUserAndProduct(foundUser, foundProduct)
                 .orElse(new CartItem(0, foundUser, foundProduct));
 
-        cartItem.setQuantity(cartItem.getQuantity() + quantity);
+        int newQuantity = cartItem.getQuantity() + quantity;
+
+
+        if (foundProduct.getInventory() < newQuantity) {
+            throw new IllegalArgumentException("Not enough inventory for product: " + foundProduct.getName());
+        }
+
+        cartItem.setQuantity(newQuantity);
 
         cartItemRepository.save(cartItem);
 

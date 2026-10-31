@@ -6,5 +6,5 @@ import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
 
-public record ProductRequest(@NotBlank String name, @NotBlank String description, @NotNull @Positive BigDecimal price, @NotNull @Positive int inventory) {
+public record ProductRequest(@NotBlank String name, @NotBlank String description, @NotNull @Positive BigDecimal price, @Positive int inventory) {
 }

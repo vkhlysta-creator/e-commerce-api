@@ -36,6 +36,13 @@ public class User implements UserDetails {
         return email;
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public Role getRole() {
+        return role;
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -51,5 +58,8 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    public void setId(Long id){
+        this.id = id;
+    }
 
 }
