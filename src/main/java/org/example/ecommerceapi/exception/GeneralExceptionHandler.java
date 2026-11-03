@@ -3,11 +3,11 @@ package org.example.ecommerceapi.exception;
 import org.example.ecommerceapi.dto.ErrorDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +21,7 @@ public class GeneralExceptionHandler {
         ex.getBindingResult().getFieldErrors().forEach(e -> errors.put(e.getField(), e.getDefaultMessage()));
         return ResponseEntity.badRequest().body(
                 new ErrorDto(
-                        Timestamp.valueOf(LocalDateTime.now()),
+                        LocalDateTime.now(),
                         HttpStatus.BAD_REQUEST,
                         "Validation failed",
                         errors
@@ -30,49 +30,43 @@ public class GeneralExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorDto> fallbackHandleException(Exception ex){
+    public ResponseEntity<ErrorDto> fallbackHandleException(Exception ex) {
         ex.printStackTrace();
-        return ResponseEntity.internalServerError().body(
-                new ErrorDto(
-                        Timestamp.valueOf(LocalDateTime.now()),
-                        HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Internal Server Error"
-                )
-        );
+        return createResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error");
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorDto> handleAuthenticationException() {
+        return createResponse(HttpStatus.UNAUTHORIZED, "Invalid email or password");
     }
 
     @ExceptionHandler(OutOfStockException.class)
-    public ResponseEntity<ErrorDto> handleOutOfStockException(OutOfStockException ex){
-        return ResponseEntity.unprocessableContent().body(
-                new ErrorDto(
-                        Timestamp.valueOf(LocalDateTime.now()),
-                        HttpStatus.UNPROCESSABLE_CONTENT,
-                        ex.getMessage()
-                )
-        );
-
+    public ResponseEntity<ErrorDto> handleOutOfStockException(OutOfStockException ex) {
+        return createResponse(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessage());
     }
 
     @ExceptionHandler({ProductNotFoundException.class, UserNotFoundException.class, CartItemNotFoundException.class})
-    public ResponseEntity<Void> handleProductNotFoundException(Exception ex){
+    public ResponseEntity<Void> handleProductNotFoundException(Exception ex) {
         return ResponseEntity.notFound().build();
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorDto> handleIllegalState(IllegalStateException ex) {
-        return ResponseEntity.badRequest().body(new ErrorDto(
-                Timestamp.valueOf(LocalDateTime.now()),
-                HttpStatus.BAD_REQUEST,
-                ex.getMessage()
-        ));
+        return createResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorDto> handleIllegalArgument(IllegalArgumentException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorDto(
-                Timestamp.valueOf(LocalDateTime.now()),
-                HttpStatus.CONFLICT,
-                ex.getMessage()
-    ));
+        return createResponse(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    private ResponseEntity<ErrorDto> createResponse(HttpStatus httpStatus, String message){
+        return ResponseEntity.status(httpStatus).body(
+                new ErrorDto(
+                        LocalDateTime.now(),
+                        httpStatus,
+                        message
+                )
+        );
     }
 }

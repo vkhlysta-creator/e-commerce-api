@@ -5,6 +5,7 @@ import org.example.ecommerceapi.dto.ProductResponse;
 import org.example.ecommerceapi.exception.ProductNotFoundException;
 import org.example.ecommerceapi.model.User;
 import org.example.ecommerceapi.model.enums.Role;
+import org.example.ecommerceapi.security.CustomAuthenticationEntryPoint;
 import org.example.ecommerceapi.security.JwtService;
 import org.example.ecommerceapi.security.SecurityConfig;
 import org.example.ecommerceapi.service.ProductService;
@@ -26,7 +27,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ProductController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, CustomAuthenticationEntryPoint.class})
 public class ProductControllerTest {
 
     @Autowired

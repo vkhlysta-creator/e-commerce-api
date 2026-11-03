@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
@@ -100,6 +101,22 @@ public class AuthControllerTest {
 
         verifyNoInteractions(authService);
     }
+
+    @Test
+    void login_BadCredentialsException() throws Exception {
+        LoginRequest request = new LoginRequest("test-mail@gmail.com", "test-password");
+
+        when(authService.authenticate(request)).thenThrow(BadCredentialsException.class);
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Invalid email or password"));
+
+        verify(authService, times(1)).authenticate(request);
+    }
+
 
 
 }

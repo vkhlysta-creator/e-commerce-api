@@ -4,6 +4,7 @@ import org.example.ecommerceapi.dto.OrderDto;
 import org.example.ecommerceapi.model.User;
 import org.example.ecommerceapi.model.enums.OrderStatus;
 import org.example.ecommerceapi.model.enums.Role;
+import org.example.ecommerceapi.security.CustomAuthenticationEntryPoint;
 import org.example.ecommerceapi.security.JwtService;
 import org.example.ecommerceapi.security.SecurityConfig;
 import org.example.ecommerceapi.service.OrderService;
@@ -25,7 +26,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @WebMvcTest(OrderController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, CustomAuthenticationEntryPoint.class})
 public class OrderControllerTest {
 
     @Autowired
@@ -57,9 +58,9 @@ public class OrderControllerTest {
     }
 
     @Test
-    void checkout_ReturnsForbidden_WhenUserIsNotAuthenticated() throws Exception {
+    void checkout_ReturnsUnauthorized_WhenUserIsNotAuthenticated() throws Exception {
         mockMvc.perform(post("/api/orders/checkout"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
 
         verify(orderService, never()).checkout(any());
     }
