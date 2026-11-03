@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest({CartController.class, ProductController.class})
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, CustomAuthenticationEntryPoint.class})
 public class SecurityConfigTest {
     @Autowired
     private MockMvc mockMvc;
@@ -43,7 +43,8 @@ public class SecurityConfigTest {
     @Test
     public void getCart_NoToken_Returns401() throws Exception {
         mockMvc.perform(get("/api/cart"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Unauthorized"));
     }
 
     @Test
