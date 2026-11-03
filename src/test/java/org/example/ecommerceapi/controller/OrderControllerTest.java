@@ -57,9 +57,9 @@ public class OrderControllerTest {
     }
 
     @Test
-    void checkout_ReturnsForbidden_WhenUserIsNotAuthenticated() throws Exception {
+    void checkout_ReturnsUnauthorized_WhenUserIsNotAuthenticated() throws Exception {
         mockMvc.perform(post("/api/orders/checkout"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
 
         verify(orderService, never()).checkout(any());
     }
