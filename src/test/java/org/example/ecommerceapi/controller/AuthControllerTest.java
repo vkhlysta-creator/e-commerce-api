@@ -117,6 +117,19 @@ public class AuthControllerTest {
         verify(authService, times(1)).authenticate(request);
     }
 
+    @Test
+    void login_WithoutEmail_ReturnsBadRequest() throws Exception{
+
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"password\": \"password123\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.infos.email").exists());
+
+        verify(authService, never()).authenticate(any());
+
+    }
+
 
 
 }
