@@ -1,5 +1,6 @@
 package org.example.ecommerceapi.controller;
 
+import jakarta.validation.Valid;
 import org.example.ecommerceapi.dto.CartDto;
 import org.example.ecommerceapi.dto.CartItemDto;
 import org.example.ecommerceapi.dto.CartItemRequest;
@@ -27,7 +28,7 @@ public class CartController {
     @PostMapping("/add")
     public ResponseEntity<CartItemDto> addInCart(
             @AuthenticationPrincipal User user,
-            @RequestBody CartItemRequest request
+            @Valid @RequestBody CartItemRequest request
             ){
         return ResponseEntity.status(HttpStatus.CREATED).body(cartService.addProductToCart(user.getUsername(), request.productId(), request.quantity()));
     }
