@@ -78,7 +78,7 @@ public class OrderService {
                         item -> new OrderItemDto(
                                 item.getProduct().getId(),
                                 item.getProduct().getName(),
-                                item.getProduct().getPrice(),
+                                item.getPrice(),
                                 item.getQuantity()
                         )
                 )
@@ -104,7 +104,7 @@ public class OrderService {
                     .map(item -> new OrderItemDto(
                             item.getProduct().getId(),
                             item.getProduct().getName(),
-                            item.getProduct().getPrice(),
+                            item.getPrice(),
                             item.getQuantity())
                     )
                     .toList();
