@@ -14,7 +14,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import tools.jackson.databind.ObjectMapper;
 import static org.mockito.Mockito.*;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -50,6 +49,34 @@ public class CartControllerTest {
         verify(cartService, never()).addProductToCart(anyString(), anyLong(), anyInt());
 
     }
+
+    @Test
+    public void addInCart_EmptyQuantity_ReturnsBadRequest() throws Exception{
+        User customer = new User("buyer@gmail.com", "test-password", Role.USER);
+
+
+        mockMvc.perform(post("/api/cart/add").with(user(customer))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"productId\": 1}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.infos.quantity").exists());
+
+        verify(cartService, never()).addProductToCart(anyString(), anyLong(), anyInt());
+    }
+
+    @Test
+    public void addInCart_RequestWithoutBody_ReturnsBadRequest() throws Exception{
+        User customer = new User("buyer@gmail.com", "test-password", Role.USER);
+
+        mockMvc.perform(post("/api/cart/add").with(user(customer))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Body of Request missing or containing invalid JSON"));
+
+        verify(cartService, never()).addProductToCart(anyString(), anyLong(), anyInt());
+    }
+
 
 
 }

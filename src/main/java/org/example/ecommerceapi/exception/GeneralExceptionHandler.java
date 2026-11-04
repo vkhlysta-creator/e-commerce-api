@@ -3,6 +3,7 @@ package org.example.ecommerceapi.exception;
 import org.example.ecommerceapi.dto.ErrorDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -58,6 +59,11 @@ public class GeneralExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorDto> handleIllegalArgument(IllegalArgumentException ex) {
         return createResponse(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorDto> handleHttpMessageNotReadableException(HttpMessageNotReadableException exception){
+        return createResponse(HttpStatus.BAD_REQUEST, "Body of Request missing or containing invalid JSON");
     }
 
     private ResponseEntity<ErrorDto> createResponse(HttpStatus httpStatus, String message){
