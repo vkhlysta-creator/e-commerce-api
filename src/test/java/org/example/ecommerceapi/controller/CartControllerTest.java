@@ -36,13 +36,13 @@ public class CartControllerTest {
     private UserDetailsService userDetailsService;
 
     @Test
-    public void addInCart_NegativeQuantity_ReturnsBadRequest() throws Exception{
+    public void addInCart_NegativeQuantity_ReturnsBadRequest() throws Exception {
         User customer = new User("buyer@gmail.com", "test-password", Role.USER);
 
 
         mockMvc.perform(post("/api/cart/add").with(user(customer))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"productId\": 1, \"quantity\": -5}"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"productId\": 1, \"quantity\": -5}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.infos.quantity").exists());
 
@@ -51,7 +51,7 @@ public class CartControllerTest {
     }
 
     @Test
-    public void addInCart_EmptyQuantity_ReturnsBadRequest() throws Exception{
+    public void addInCart_EmptyQuantity_ReturnsBadRequest() throws Exception {
         User customer = new User("buyer@gmail.com", "test-password", Role.USER);
 
 
@@ -65,7 +65,7 @@ public class CartControllerTest {
     }
 
     @Test
-    public void addInCart_RequestWithoutBody_ReturnsBadRequest() throws Exception{
+    public void addInCart_RequestWithoutBody_ReturnsBadRequest() throws Exception {
         User customer = new User("buyer@gmail.com", "test-password", Role.USER);
 
         mockMvc.perform(post("/api/cart/add").with(user(customer))
@@ -76,7 +76,6 @@ public class CartControllerTest {
 
         verify(cartService, never()).addProductToCart(anyString(), anyLong(), anyInt());
     }
-
 
 
 }
