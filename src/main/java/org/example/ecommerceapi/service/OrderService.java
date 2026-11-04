@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -73,55 +72,38 @@ public class OrderService {
         orderRepository.save(createdOrder);
         cartItemRepository.deleteAll(items);
 
-        List<OrderItemDto> orderItemDtos = createdOrder.getItems().stream()
-                .map(
-                        item -> new OrderItemDto(
-                                item.getProduct().getId(),
-                                item.getProduct().getName(),
-                                item.getProduct().getPrice(),
-                                item.getQuantity()
-                        )
-                )
-                .toList();
-
-        return new OrderDto(
-                createdOrder.getId(),
-                createdOrder.getTotalPrice(),
-                createdOrder.getStatus(),
-                createdOrder.getCreatedAt(),
-                orderItemDtos
-        );
-
+        return toOrderDto(createdOrder);
     }
 
     public List<OrderDto> getMyOrders(String userEmail){
         User foundUser = userRepository.getUserByEmail(userEmail).orElseThrow(() -> new UserNotFoundException("User wasn't found"));
-        List<Order> foundOrders = orderRepository.findAllByUserOrderByCreatedAtDesc(foundUser);
-        List<OrderDto> resultList = new ArrayList<>(foundOrders.size());
 
-        for (Order order: foundOrders){
-            List<OrderItemDto> orderItemDtos = order.getItems().stream()
-                    .map(item -> new OrderItemDto(
-                            item.getProduct().getId(),
-                            item.getProduct().getName(),
-                            item.getProduct().getPrice(),
-                            item.getQuantity())
-                    )
-                    .toList();
-
-            resultList.add(new OrderDto(
-                    order.getId(),
-                    order.getTotalPrice(),
-                    order.getStatus(),
-                    order.getCreatedAt(),
-                    orderItemDtos
-            ));
-        }
-
-        return resultList;
-
-
+        return orderRepository.findAllByUserOrderByCreatedAtDesc(foundUser).stream()
+                .map(this::toOrderDto)
+                .toList();
     }
 
+    private OrderDto toOrderDto(Order order) {
+        List<OrderItemDto> orderItemDtos = order.getItems().stream()
+                .map(this::toOrderItemDto)
+                .toList();
 
+        return new OrderDto(
+                order.getId(),
+                order.getTotalPrice(),
+                order.getStatus(),
+                order.getCreatedAt(),
+                orderItemDtos
+        );
+    }
+
+    // The price comes from OrderItem (snapshot at checkout), not from the current Product price.
+    private OrderItemDto toOrderItemDto(OrderItem item) {
+        return new OrderItemDto(
+                item.getProduct().getId(),
+                item.getProduct().getName(),
+                item.getPrice(),
+                item.getQuantity()
+        );
+    }
 }

@@ -1,11 +1,9 @@
 package org.example.ecommerceapi.service;
 
 import org.example.ecommerceapi.dto.OrderDto;
+import org.example.ecommerceapi.dto.OrderItemDto;
 import org.example.ecommerceapi.exception.OutOfStockException;
-import org.example.ecommerceapi.model.CartItem;
-import org.example.ecommerceapi.model.Order;
-import org.example.ecommerceapi.model.Product;
-import org.example.ecommerceapi.model.User;
+import org.example.ecommerceapi.model.*;
 import org.example.ecommerceapi.model.enums.OrderStatus;
 import org.example.ecommerceapi.model.enums.Role;
 import org.example.ecommerceapi.repository.CartItemRepository;
@@ -105,6 +103,29 @@ public class OrderServiceTest {
         verify(orderRepository, never()).save(any());
         verify(cartItemRepository, never()).deleteAll(any());
         assertThat(mockedFirstProduct.getInventory()).isEqualTo(2);
+    }
+
+    @Test
+    public void getMyOrders_WithChangedPrice_ReturnsOldPrice(){
+        User user = createStandardUser(1L, "test-email","test-password", Role.USER);
+        Product product = createStandardProduct(1L, "test-product", "test-product-description", BigDecimal.valueOf(150L), 10);
+        Order order = new Order();
+        OrderItem orderItem = new OrderItem(1, BigDecimal.valueOf(100), order, product);
+        order.addItem(orderItem);
+
+        when(userRepository.getUserByEmail(anyString())).thenReturn(Optional.of(user));
+        when(orderRepository.findAllByUserOrderByCreatedAtDesc(user)).thenReturn(List.of(order));
+
+        List<OrderDto> orderItemDto = orderService.getMyOrders(user.getUsername());
+        BigDecimal priceOfFirstOrderItem = orderItemDto
+                .getFirst()
+                .items()
+                .getFirst()
+                .price();
+
+        assertThat(priceOfFirstOrderItem).isEqualByComparingTo(BigDecimal.valueOf(100L));
+
+
     }
 
 
