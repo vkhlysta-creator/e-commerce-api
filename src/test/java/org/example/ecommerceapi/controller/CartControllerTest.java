@@ -44,7 +44,7 @@ public class CartControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"productId\": 1, \"quantity\": -5}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.infos.quantity").exists());
+                .andExpect(jsonPath("$.errors.quantity").exists());
 
         verify(cartService, never()).addProductToCart(anyString(), anyLong(), anyInt());
 
@@ -59,7 +59,7 @@ public class CartControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"productId\": 1}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.infos.quantity").exists());
+                .andExpect(jsonPath("$.errors.quantity").exists());
 
         verify(cartService, never()).addProductToCart(anyString(), anyLong(), anyInt());
     }
@@ -72,7 +72,7 @@ public class CartControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(""))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Body of Request missing or containing invalid JSON"));
+                .andExpect(jsonPath("$.detail").value("Failed to read request"));
 
         verify(cartService, never()).addProductToCart(anyString(), anyLong(), anyInt());
     }

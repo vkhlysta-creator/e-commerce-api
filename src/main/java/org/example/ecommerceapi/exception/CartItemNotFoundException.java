@@ -1,7 +1,8 @@
 package org.example.ecommerceapi.exception;
 
-public class CartItemNotFoundException extends RuntimeException {
-    public CartItemNotFoundException(String message) {
-        super(message);
+public class CartItemNotFoundException extends NotFoundException {
+
+    public CartItemNotFoundException(String detail) {
+        super(detail);
     }
 }

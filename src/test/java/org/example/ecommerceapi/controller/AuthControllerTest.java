@@ -124,7 +124,7 @@ public class AuthControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"password\": \"password123\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.infos.email").exists());
+                .andExpect(jsonPath("$.errors.email").exists());
 
         verify(authService, never()).authenticate(any());
 
