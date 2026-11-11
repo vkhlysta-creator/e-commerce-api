@@ -18,6 +18,7 @@ import tools.jackson.databind.ObjectMapper;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.hamcrest.Matchers.hasSize;
 
 @WebMvcTest(AuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -118,11 +119,11 @@ public class AuthControllerTest {
     }
 
     @Test
-    void login_WithoutEmail_ReturnsBadRequest() throws Exception{
+    void login_WithoutEmail_ReturnsBadRequest() throws Exception {
 
         mockMvc.perform(post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"password\": \"password123\"}"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"password\": \"password123\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.email").exists());
 
@@ -130,6 +131,18 @@ public class AuthControllerTest {
 
     }
 
+    @Test
+    void login_BlankEmail_ReturnsAllFieldErrors() throws Exception {
+        LoginRequest request = new LoginRequest("  ", "test-password");
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.email", hasSize(2)));
+
+        verify(authService, never()).authenticate(any());
+    }
 
 
 }
