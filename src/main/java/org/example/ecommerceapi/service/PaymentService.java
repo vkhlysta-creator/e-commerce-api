@@ -10,6 +10,7 @@ import com.stripe.net.Webhook;
 import com.stripe.param.PaymentIntentCreateParams;
 import jakarta.annotation.PostConstruct;
 import org.example.ecommerceapi.dto.PaymentResponse;
+import org.example.ecommerceapi.exception.OrderNotFoundException;
 import org.example.ecommerceapi.model.Order;
 import org.example.ecommerceapi.model.enums.OrderStatus;
 import org.example.ecommerceapi.repository.OrderRepository;
@@ -39,9 +40,9 @@ public class PaymentService {
 
 
     public PaymentResponse createPaymentIntent(Long orderId, String userEmail) throws StripeException {
-        Order foundOrder = orderRepository.findById(orderId).orElseThrow(() -> new IllegalArgumentException("Order wasn't found!"));
+        Order foundOrder = orderRepository.findById(orderId).orElseThrow(OrderNotFoundException::new);
         if (!foundOrder.getUser().getUsername().equals(userEmail)){
-            throw new IllegalArgumentException("Illegal Username for this order!");
+            throw new OrderNotFoundException();
         }
         if (foundOrder.getStatus().equals(OrderStatus.PAID)){
             throw new IllegalStateException("Order was already paid!");
@@ -65,7 +66,7 @@ public class PaymentService {
             throw new IllegalStateException("Payment not succeeded");
         }
         String orderIdStr = intent.getMetadata().get("orderId");
-        Order order = orderRepository.findById(Long.parseLong(orderIdStr)).orElseThrow(() -> new IllegalArgumentException("Order wasn't found!"));
+        Order order = orderRepository.findById(Long.parseLong(orderIdStr)).orElseThrow(OrderNotFoundException::new);
         order.setStatus(OrderStatus.PAID);
 
         orderRepository.save(order);
