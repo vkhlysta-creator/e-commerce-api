@@ -2,9 +2,7 @@ package org.example.ecommerceapi.service;
 
 import org.example.ecommerceapi.dto.CartDto;
 import org.example.ecommerceapi.dto.CartItemDto;
-import org.example.ecommerceapi.exception.CartItemNotFoundException;
-import org.example.ecommerceapi.exception.ProductNotFoundException;
-import org.example.ecommerceapi.exception.UserNotFoundException;
+import org.example.ecommerceapi.exception.*;
 import org.example.ecommerceapi.model.CartItem;
 import org.example.ecommerceapi.model.Product;
 import org.example.ecommerceapi.model.User;
@@ -43,7 +41,7 @@ public class CartService {
 
 
         if (foundProduct.getInventory() < newQuantity) {
-            throw new IllegalArgumentException("Not enough inventory for product: " + foundProduct.getName());
+            throw new OutOfStockException("Not enough inventory for product: " + foundProduct.getName());
         }
 
         cartItem.setQuantity(newQuantity);

@@ -2,6 +2,7 @@ package org.example.ecommerceapi.service;
 
 import org.example.ecommerceapi.dto.OrderDto;
 import org.example.ecommerceapi.dto.OrderItemDto;
+import org.example.ecommerceapi.exception.EmptyCartException;
 import org.example.ecommerceapi.exception.OutOfStockException;
 import org.example.ecommerceapi.model.*;
 import org.example.ecommerceapi.model.enums.OrderStatus;
@@ -83,8 +84,8 @@ public class OrderServiceTest {
         when(userRepository.getUserByEmail(mockedUser.getUsername())).thenReturn(Optional.of(mockedUser));
         when(cartItemRepository.getCartItemsByUser(mockedUser)).thenReturn(items);
 
-        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> orderService.checkout(mockedUser.getUsername()));
-        assertThat(exception.getMessage()).contains("Cart is empty");
+        EmptyCartException exception = assertThrows(EmptyCartException.class, () -> orderService.checkout(mockedUser.getUsername()));
+        assertThat(exception.getMessage()).contains("Cart is empty!");
 
     }
 

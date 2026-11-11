@@ -38,12 +38,6 @@ public class GeneralExceptionHandler extends ResponseEntityExceptionHandler {
         return createResponse(HttpStatus.UNAUTHORIZED, "Invalid email or password");
     }
 
-    @ExceptionHandler(OutOfStockException.class)
-    public ResponseEntity<ErrorDto> handleOutOfStockException(OutOfStockException ex) {
-        return createResponse(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessage());
-    }
-
-
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorDto> handleIllegalState(IllegalStateException ex) {
         return createResponse(HttpStatus.BAD_REQUEST, ex.getMessage());

@@ -10,7 +10,9 @@ import com.stripe.net.Webhook;
 import com.stripe.param.PaymentIntentCreateParams;
 import jakarta.annotation.PostConstruct;
 import org.example.ecommerceapi.dto.PaymentResponse;
+import org.example.ecommerceapi.exception.OrderAlreadyPaidException;
 import org.example.ecommerceapi.exception.OrderNotFoundException;
+import org.example.ecommerceapi.exception.PaymentNotCompletedException;
 import org.example.ecommerceapi.model.Order;
 import org.example.ecommerceapi.model.enums.OrderStatus;
 import org.example.ecommerceapi.repository.OrderRepository;
@@ -45,7 +47,7 @@ public class PaymentService {
             throw new OrderNotFoundException();
         }
         if (foundOrder.getStatus().equals(OrderStatus.PAID)){
-            throw new IllegalStateException("Order was already paid!");
+            throw new OrderAlreadyPaidException();
         }
         long totalPriceInCents = foundOrder.getTotalPrice().multiply(BigDecimal.valueOf(100)).longValue();
 
@@ -63,7 +65,7 @@ public class PaymentService {
     public void confirmPayment(String paymentIntentId) throws StripeException{
         PaymentIntent intent = PaymentIntent.retrieve(paymentIntentId);
         if (!"succeeded".equals(intent.getStatus())){
-            throw new IllegalStateException("Payment not succeeded");
+            throw new PaymentNotCompletedException();
         }
         String orderIdStr = intent.getMetadata().get("orderId");
         Order order = orderRepository.findById(Long.parseLong(orderIdStr)).orElseThrow(OrderNotFoundException::new);

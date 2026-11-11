@@ -1,6 +1,7 @@
 package org.example.ecommerceapi.controller;
 
 import org.example.ecommerceapi.dto.OrderDto;
+import org.example.ecommerceapi.exception.OutOfStockException;
 import org.example.ecommerceapi.model.User;
 import org.example.ecommerceapi.model.enums.OrderStatus;
 import org.example.ecommerceapi.model.enums.Role;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -63,5 +65,16 @@ public class OrderControllerTest {
                 .andExpect(status().isUnauthorized());
 
         verify(orderService, never()).checkout(any());
+    }
+
+    @Test
+    void checkout_OutOfStock_ReturnsProblemDetail422() throws Exception{
+        User customer = new User("buyer@gmail.com", "test-password", Role.USER);
+        when(orderService.checkout(customer.getUsername())).thenThrow(new OutOfStockException("Not enough products on the storage"));
+
+        mockMvc.perform(post("/api/orders/checkout").with(user(customer)))
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.detail").exists())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON));
     }
 }

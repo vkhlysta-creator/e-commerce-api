@@ -3,6 +3,7 @@ package org.example.ecommerceapi.service;
 import org.example.ecommerceapi.dto.CartDto;
 import org.example.ecommerceapi.dto.CartItemDto;
 import org.example.ecommerceapi.exception.CartItemNotFoundException;
+import org.example.ecommerceapi.exception.OutOfStockException;
 import org.example.ecommerceapi.model.CartItem;
 import org.example.ecommerceapi.model.Product;
 import org.example.ecommerceapi.model.User;
@@ -83,7 +84,7 @@ public class CartServiceTest {
                 .thenReturn(Optional.empty());
 
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> cartService.addProductToCart(mockedUser.getUsername(), mockedProduct.getId(), 5));
+        OutOfStockException exception = assertThrows(OutOfStockException.class, () -> cartService.addProductToCart(mockedUser.getUsername(), mockedProduct.getId(), 5));
         assertThat(exception.getMessage()).contains("Not enough inventory");
         verify(cartItemRepository, never()).save(cartItemCaptor.capture());
 
