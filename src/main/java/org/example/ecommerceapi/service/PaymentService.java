@@ -10,9 +10,7 @@ import com.stripe.net.Webhook;
 import com.stripe.param.PaymentIntentCreateParams;
 import jakarta.annotation.PostConstruct;
 import org.example.ecommerceapi.dto.PaymentResponse;
-import org.example.ecommerceapi.exception.OrderAlreadyPaidException;
-import org.example.ecommerceapi.exception.OrderNotFoundException;
-import org.example.ecommerceapi.exception.PaymentNotCompletedException;
+import org.example.ecommerceapi.exception.*;
 import org.example.ecommerceapi.model.Order;
 import org.example.ecommerceapi.model.enums.OrderStatus;
 import org.example.ecommerceapi.repository.OrderRepository;
@@ -41,7 +39,7 @@ public class PaymentService {
     }
 
 
-    public PaymentResponse createPaymentIntent(Long orderId, String userEmail) throws StripeException {
+    public PaymentResponse createPaymentIntent(Long orderId, String userEmail) {
         Order foundOrder = orderRepository.findById(orderId).orElseThrow(OrderNotFoundException::new);
         if (!foundOrder.getUser().getUsername().equals(userEmail)){
             throw new OrderNotFoundException();
@@ -57,38 +55,48 @@ public class PaymentService {
                 .putMetadata("orderId", orderId.toString())
                 .build();
 
-        PaymentIntent intent = PaymentIntent.create(params);
-
-        return new PaymentResponse(intent.getClientSecret());
-    }
-
-    public void confirmPayment(String paymentIntentId) throws StripeException{
-        PaymentIntent intent = PaymentIntent.retrieve(paymentIntentId);
-        if (!"succeeded".equals(intent.getStatus())){
-            throw new PaymentNotCompletedException();
+        try {
+            PaymentIntent intent = PaymentIntent.create(params);
+            return new PaymentResponse(intent.getClientSecret());
+        } catch (StripeException e) {
+            throw new PaymentGatewayException(e);
         }
-        String orderIdStr = intent.getMetadata().get("orderId");
-        Order order = orderRepository.findById(Long.parseLong(orderIdStr)).orElseThrow(OrderNotFoundException::new);
-        order.setStatus(OrderStatus.PAID);
-
-        orderRepository.save(order);
-
     }
 
-    public void handleWebHook(String payLoad, String sigHeader) throws SignatureVerificationException {
-        Event event = Webhook.constructEvent(payLoad,  sigHeader, hookSecret );
-
-        if ("payment_intent.succeeded".equals(event.getType())){
-            EventDataObjectDeserializer deserializer = event.getDataObjectDeserializer();
-            if (deserializer.getObject().isPresent()){
-                PaymentIntent intent = (PaymentIntent) deserializer.getObject().get();
-
-                String orderIdStr = intent.getMetadata().get("orderId");
-
-                Order order = orderRepository.findById(Long.parseLong(orderIdStr)).orElseThrow();
-                order.setStatus(OrderStatus.PAID);
-                orderRepository.save(order);
+    public void confirmPayment(String paymentIntentId){
+        try {
+            PaymentIntent intent = PaymentIntent.retrieve(paymentIntentId);
+            if (!"succeeded".equals(intent.getStatus())){
+                throw new PaymentNotCompletedException();
             }
+            String orderIdStr = intent.getMetadata().get("orderId");
+            Order order = orderRepository.findById(Long.parseLong(orderIdStr)).orElseThrow(OrderNotFoundException::new);
+            order.setStatus(OrderStatus.PAID);
+
+            orderRepository.save(order);
+        } catch (StripeException e) {
+            throw new PaymentGatewayException(e);
+        }
+    }
+
+    public void handleWebHook(String payLoad, String sigHeader) {
+        try {
+            Event event = Webhook.constructEvent(payLoad,  sigHeader, hookSecret );
+
+            if ("payment_intent.succeeded".equals(event.getType())){
+                EventDataObjectDeserializer deserializer = event.getDataObjectDeserializer();
+                if (deserializer.getObject().isPresent()){
+                    PaymentIntent intent = (PaymentIntent) deserializer.getObject().get();
+
+                    String orderIdStr = intent.getMetadata().get("orderId");
+
+                    Order order = orderRepository.findById(Long.parseLong(orderIdStr)).orElseThrow(OrderNotFoundException::new);
+                    order.setStatus(OrderStatus.PAID);
+                    orderRepository.save(order);
+                }
+            }
+        } catch (SignatureVerificationException e) {
+            throw new InvalidWebhookSignatureException(e);
         }
     }
 

@@ -1,11 +1,12 @@
 package org.example.ecommerceapi.service;
 
+import com.stripe.exception.ApiConnectionException;
+import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
-import org.example.ecommerceapi.exception.ConflictException;
-import org.example.ecommerceapi.exception.OrderAlreadyPaidException;
-import org.example.ecommerceapi.exception.OrderNotFoundException;
-import org.example.ecommerceapi.exception.PaymentNotCompletedException;
+import com.stripe.net.Webhook;
+import com.stripe.param.PaymentIntentCreateParams;
+import org.example.ecommerceapi.exception.*;
 import org.example.ecommerceapi.model.Order;
 import org.example.ecommerceapi.model.User;
 import org.example.ecommerceapi.model.enums.OrderStatus;
@@ -24,6 +25,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -70,6 +72,46 @@ public class PaymentServiceTest {
             mockedIntent.when(() -> PaymentIntent.retrieve("paymentIntentTest")).thenReturn(intent);
 
             assertThrows(PaymentNotCompletedException.class, () -> paymentService.confirmPayment("paymentIntentTest"));
+        }
+    }
+
+    @Test
+    void confirmPayment_StripeProblem_ThrowsPaymentGatewayException(){
+        try (MockedStatic<PaymentIntent> mockedIntent = Mockito.mockStatic(PaymentIntent.class)){
+            StripeException toThrowException = new ApiConnectionException("Connection failed");
+            mockedIntent.when(() -> PaymentIntent.retrieve("paymentIntentTest")).thenThrow(toThrowException);
+
+
+            PaymentGatewayException exception = assertThrows(PaymentGatewayException.class, () -> paymentService.confirmPayment("paymentIntentTest"));
+            assertThat(exception.getCause()).isSameAs(toThrowException);
+        }
+    }
+
+    @Test
+    void createPaymentIntent_StripeInternalProblem_ThrowsPaymentGatewayException(){
+        try (MockedStatic<PaymentIntent> mockedIntent = Mockito.mockStatic(PaymentIntent.class)){
+            User foundUser = new User("testUser@gmail.com", "testPassword", Role.USER);
+            Order foundOrder = new Order(BigDecimal.TEN, OrderStatus.PENDING, LocalDateTime.now().minusHours(2), foundUser);
+            when(orderRepository.findById(1L)).thenReturn(Optional.of(foundOrder));
+            StripeException toThrowException = new ApiConnectionException("Connection failed");
+            mockedIntent.when(() -> PaymentIntent.create(any(PaymentIntentCreateParams.class))).thenThrow(toThrowException);
+
+            PaymentGatewayException exception = assertThrows(PaymentGatewayException.class, () -> paymentService.createPaymentIntent(1L, "testUser@gmail.com"));
+            assertThat(exception.getCause()).isSameAs(toThrowException);
+        }
+    }
+
+    @Test
+    void handleWebHook_WithInvalidSignature_ThrowsInvalidWebhookSignatureException(){
+        try (MockedStatic<Webhook> mockedWebhook = Mockito.mockStatic(Webhook.class)){
+            StripeException toThrowException = new SignatureVerificationException("message-of-exception", "test-signature");
+            mockedWebhook.when(() -> Webhook.constructEvent(eq("test-payload"), eq("test-signature"), any())).thenThrow(toThrowException);
+
+            InvalidWebhookSignatureException caughtException = assertThrows(InvalidWebhookSignatureException.class, () -> paymentService.handleWebHook("test-payload", "test-signature"));
+            assertThat(caughtException.getCause()).isSameAs(toThrowException);
+
+
+
         }
     }
 
