@@ -4,13 +4,13 @@ import org.example.ecommerceapi.dto.AuthResponse;
 import org.example.ecommerceapi.dto.LoginRequest;
 import org.example.ecommerceapi.dto.RegisterRequest;
 import org.example.ecommerceapi.exception.EmailAlreadyRegisteredException;
-import org.example.ecommerceapi.exception.UserNotFoundException;
 import org.example.ecommerceapi.model.User;
 import org.example.ecommerceapi.model.enums.Role;
 import org.example.ecommerceapi.repository.UserRepository;
 import org.example.ecommerceapi.security.JwtService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,11 +50,12 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public AuthResponse authenticate(LoginRequest request) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
 
-        User foundUser = userRepository.getUserByEmail(request.email()).orElseThrow(() -> new UserNotFoundException("User was not found"));
-
-        return new AuthResponse(jwtService.generateToken(foundUser));
+        if (authentication.getPrincipal() instanceof User user) {
+            return new AuthResponse(jwtService.generateToken(user));
+        }
+        throw new IllegalStateException("Authenticated Object is not USER");
 
     }
 }

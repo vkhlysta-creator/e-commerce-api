@@ -23,12 +23,12 @@ public class OrderController {
 
     @PostMapping("/checkout")
     public ResponseEntity<OrderDto> checkout(@AuthenticationPrincipal User user){
-        return ResponseEntity.ok(orderService.checkout(user.getUsername()));
+        return ResponseEntity.ok(orderService.checkout(user));
     }
 
     @GetMapping("")
     public ResponseEntity<List<OrderDto>> getAllOrders(@AuthenticationPrincipal User user){
-        return ResponseEntity.ok(orderService.getMyOrders(user.getUsername()));
+        return ResponseEntity.ok(orderService.getMyOrders(user));
     }
 
 

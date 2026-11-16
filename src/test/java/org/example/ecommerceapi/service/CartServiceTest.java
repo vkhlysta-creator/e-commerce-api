@@ -34,8 +34,6 @@ public class CartServiceTest {
     @Mock
     private ProductRepository productRepository;
     @Mock
-    private UserRepository userRepository;
-    @Mock
     private CartItemRepository cartItemRepository;
 
     @InjectMocks
@@ -52,12 +50,11 @@ public class CartServiceTest {
         User mockedUser = createStandardUser();
 
         when(productRepository.findById(mockedProduct.getId())).thenReturn(Optional.of(mockedProduct));
-        when(userRepository.getUserByEmail(mockedUser.getUsername())).thenReturn(Optional.of(mockedUser));
 
 
         when(cartItemRepository.save(any(CartItem.class))).thenAnswer(i -> i.getArgument(0));
 
-        CartItemDto result = cartService.addProductToCart(mockedUser.getUsername(), mockedProduct.getId(), 3);
+        CartItemDto result = cartService.addProductToCart(mockedUser, mockedProduct.getId(), 3);
 
         assertThat(result.productId()).isEqualTo(mockedProduct.getId());
 
@@ -78,13 +75,12 @@ public class CartServiceTest {
 
 
         when(productRepository.findById(mockedProduct.getId())).thenReturn(Optional.of(mockedProduct));
-        when(userRepository.getUserByEmail(mockedUser.getUsername())).thenReturn(Optional.of(mockedUser));
 
         when(cartItemRepository.getCartItemByUserAndProduct(mockedUser, mockedProduct))
                 .thenReturn(Optional.empty());
 
 
-        OutOfStockException exception = assertThrows(OutOfStockException.class, () -> cartService.addProductToCart(mockedUser.getUsername(), mockedProduct.getId(), 5));
+        OutOfStockException exception = assertThrows(OutOfStockException.class, () -> cartService.addProductToCart(mockedUser, mockedProduct.getId(), 5));
         assertThat(exception.getMessage()).contains("Not enough inventory");
         verify(cartItemRepository, never()).save(cartItemCaptor.capture());
 
@@ -105,10 +101,9 @@ public class CartServiceTest {
         CartItem mockedSecondItem = new CartItem(1, mockedUser, productB);
         List<CartItem> items = List.of(mockedFirstItem, mockedSecondItem);
 
-        when(userRepository.getUserByEmail(mockedUser.getUsername())).thenReturn(Optional.of(mockedUser));
         when(cartItemRepository.getCartItemsByUser(mockedUser)).thenReturn(items);
 
-        CartDto dto = cartService.getCart(mockedUser.getUsername());
+        CartDto dto = cartService.getCart(mockedUser);
 
         assertThat(dto.items().size()).isEqualTo(2);
         assertThat(dto.totalPrice()).isEqualByComparingTo(productA.getPrice().multiply(BigDecimal.TWO).add(productB.getPrice())); // 2 * productA = 2000 and 1 * product
@@ -120,9 +115,8 @@ public class CartServiceTest {
     public void getEmptyCart() {
         User mockedUser = createStandardUser();
 
-        when(userRepository.getUserByEmail(mockedUser.getUsername())).thenReturn(Optional.of(mockedUser));
         when(cartItemRepository.getCartItemsByUser(mockedUser)).thenReturn(List.of());
-        CartDto dto = cartService.getCart(mockedUser.getUsername());
+        CartDto dto = cartService.getCart(mockedUser);
         assertThat(dto.totalPrice()).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(dto.items().size()).isEqualTo(0);
     }
@@ -136,10 +130,9 @@ public class CartServiceTest {
         CartItem mockedItem = new CartItem(2, mockedUser, mockedProduct);
 
         when(productRepository.findById(mockedProduct.getId())).thenReturn(Optional.of(mockedProduct));
-        when(userRepository.getUserByEmail(mockedUser.getUsername())).thenReturn(Optional.of(mockedUser));
         when(cartItemRepository.getCartItemByUserAndProduct(mockedUser, mockedProduct)).thenReturn(Optional.of(mockedItem));
 
-        cartService.removeProductFromCart(mockedUser.getUsername(), mockedProduct.getId());
+        cartService.removeProductFromCart(mockedUser, mockedProduct.getId());
 
         verify(cartItemRepository, times(1)).delete(mockedItem);
 
@@ -154,10 +147,9 @@ public class CartServiceTest {
 
 
         when(productRepository.findById(mockedProduct.getId())).thenReturn(Optional.of(mockedProduct));
-        when(userRepository.getUserByEmail(mockedUser.getUsername())).thenReturn(Optional.of(mockedUser));
         when(cartItemRepository.getCartItemByUserAndProduct(mockedUser, mockedProduct)).thenReturn(Optional.empty());
 
-        assertThrows(CartItemNotFoundException.class, () -> cartService.removeProductFromCart(mockedUser.getUsername(), mockedProduct.getId()));
+        assertThrows(CartItemNotFoundException.class, () -> cartService.removeProductFromCart(mockedUser, mockedProduct.getId()));
         verify(cartItemRepository, never()).delete(any());
     }
 

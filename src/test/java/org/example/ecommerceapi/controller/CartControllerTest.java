@@ -45,7 +45,7 @@ public class CartControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.quantity").exists());
 
-        verify(cartService, never()).addProductToCart(anyString(), anyLong(), anyInt());
+        verify(cartService, never()).addProductToCart(any(), anyLong(), anyInt());
 
     }
 
@@ -60,7 +60,7 @@ public class CartControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.quantity").exists());
 
-        verify(cartService, never()).addProductToCart(anyString(), anyLong(), anyInt());
+        verify(cartService, never()).addProductToCart(any(), anyLong(), anyInt());
     }
 
     @Test
@@ -73,7 +73,7 @@ public class CartControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.detail").value("Failed to read request"));
 
-        verify(cartService, never()).addProductToCart(anyString(), anyLong(), anyInt());
+        verify(cartService, never()).addProductToCart(any(), anyLong(), anyInt());
     }
 
 

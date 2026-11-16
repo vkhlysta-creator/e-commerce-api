@@ -68,7 +68,7 @@ public class ProductControllerTest {
 
     @Test
     void createProduct_ReturnsBadRequest_WhenValidationFails() throws Exception {
-        ProductRequest request = new ProductRequest("", "Desc", BigDecimal.valueOf(-100), 0);
+        ProductRequest request = new ProductRequest("", "Desc", BigDecimal.valueOf(-100), -1);
 
         User adminUser = new User("test-mail", "test-password", Role.ADMIN);
 
@@ -83,6 +83,18 @@ public class ProductControllerTest {
 
         verify(productService, never()).createNewProduct(any());
 
+    }
+
+    @Test
+    void createProduct_ReturnsOK_WhenInventoryZero() throws Exception {
+        ProductRequest request = new ProductRequest("Iphone 18 Pro Max", "New Phone", BigDecimal.valueOf(1800), 0);
+        when(productService.createNewProduct(request)).thenReturn(new ProductResponse(1L, "Iphone 18 Pro Max", "New Phone", BigDecimal.valueOf(1800), 0));
+        User adminUser = new User("test-mail", "test-password", Role.ADMIN);
+
+        mockMvc.perform(
+                        post("/api/products").with(user(adminUser)).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isOk());
     }
 
     @Test

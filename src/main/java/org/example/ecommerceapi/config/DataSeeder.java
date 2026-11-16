@@ -5,6 +5,8 @@ import org.example.ecommerceapi.model.enums.Role;
 import org.example.ecommerceapi.model.User;
 import org.example.ecommerceapi.repository.ProductRepository;
 import org.example.ecommerceapi.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,6 +18,7 @@ import java.math.BigDecimal;
 @Profile({"dev", "local"})
 public class DataSeeder implements CommandLineRunner {
 
+    private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final PasswordEncoder passwordEncoder;
@@ -34,7 +37,7 @@ public class DataSeeder implements CommandLineRunner {
 
             userRepository.save(admin);
             userRepository.save(user);
-            System.out.println("✅ Users seeded!");
+            log.info("Users seeded!");
         }
 
         if (productRepository.count() == 0) {
@@ -45,7 +48,7 @@ public class DataSeeder implements CommandLineRunner {
             productRepository.save(p1);
             productRepository.save(p2);
             productRepository.save(p3);
-            System.out.println("✅ Products seeded!");
+            log.info("Products seeded!");
         }
     }
 }

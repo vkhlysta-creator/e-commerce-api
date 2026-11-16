@@ -12,7 +12,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.authentication.AuthenticationManager;
 
@@ -44,7 +46,7 @@ public class AuthServiceTest {
     private ArgumentCaptor<User> userCaptor;
 
     @Test
-    public void register_Success(){
+    public void register_Success() {
         RegisterRequest registerRequest = createStandardRegisterRequest("test-mail", "raw-password");
 
         when(userRepository.getUserByEmail(registerRequest.email())).thenReturn(Optional.empty());
@@ -63,7 +65,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void register_ThrowsException_WhenEmailAlreadyExists(){
+    public void register_ThrowsException_WhenEmailAlreadyExists() {
         RegisterRequest registerRequest = createStandardRegisterRequest("test-mail-used", "raw-password-used");
 
         when(userRepository.getUserByEmail(registerRequest.email())).thenReturn(Optional.of(new User(registerRequest.email(), "encoded-password", Role.USER)));
@@ -76,11 +78,13 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void authenticate_Success(){
+    public void authenticate_Success() {
         LoginRequest loginRequest = createStandardLoginRequest("test-mail", "test-password");
         User testUser = new User("test-mail", "test-password-encoded", Role.USER);
 
-        when(userRepository.getUserByEmail(loginRequest.email())).thenReturn(Optional.of(testUser));
+        Authentication authentication = new TestingAuthenticationToken(testUser, null);
+
+        when(authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password()))).thenReturn(authentication);
         when(jwtService.generateToken(testUser)).thenReturn("jwt_token");
 
         AuthResponse authResponse = authService.authenticate(loginRequest);
@@ -90,12 +94,27 @@ public class AuthServiceTest {
 
     }
 
+    @Test
+    public void authenticate_WithInstanceOfNotUser_ThrowsIllegalStateException() {
+        LoginRequest loginRequest = createStandardLoginRequest("test-mail", "test-password");
+        Authentication authentication = new TestingAuthenticationToken(new Object(), null);
 
-    private RegisterRequest createStandardRegisterRequest(String email, String password){
+        when(authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password()))).thenReturn(authentication);
+
+
+        assertThrows(IllegalStateException.class, () -> authService.authenticate(loginRequest));
+
+        verify(jwtService, never()).generateToken(any());
+
+
+    }
+
+
+    private RegisterRequest createStandardRegisterRequest(String email, String password) {
         return new RegisterRequest(email, password);
     }
 
-    private LoginRequest createStandardLoginRequest(String email, String password){
+    private LoginRequest createStandardLoginRequest(String email, String password) {
         return new LoginRequest(email, password);
     }
 }
