@@ -1,177 +1,183 @@
 # E-Commerce API
 
-A production-ready RESTful e-commerce backend built with Spring Boot. Features JWT authentication, Stripe payment integration, role-based access control, and Docker support.
+A REST backend for a small online shop, built with Spring Boot as a learning project.
+It covers the core flow of an e-commerce service: registration and login with JWT,
+a product catalog, a shopping cart, checkout with stock control, order history and
+payments through Stripe (test mode).
 
 ## Tech Stack
 
-- **Java 21** + **Spring Boot 4.1**
-- **Spring Security** — JWT-based stateless authentication
-- **Spring Data JPA** + **Hibernate** — ORM with pessimistic locking on checkout
-- **PostgreSQL** — primary database
-- **Flyway** — database migrations
-- **Stripe** — payment processing with webhook support
-- **Testcontainers** — integration tests against a real PostgreSQL container
-- **Docker** + **Docker Compose** — containerized deployment
-- **SpringDoc OpenAPI** — auto-generated Swagger UI
+- Java 21, Spring Boot 4.1
+- Spring Security with stateless JWT authentication (jjwt)
+- Spring Data JPA / Hibernate, PostgreSQL, Flyway migrations
+- Bean Validation
+- Stripe Java SDK
+- SpringDoc OpenAPI (Swagger UI)
+- JUnit 5, Mockito, MockMvc, Testcontainers
 
 ## Features
 
-- User registration and login with JWT tokens
-- Role-based access control (`USER` / `ADMIN`)
+- Registration and login; passwords hashed with BCrypt, JWT valid for 24 hours
+- Roles `USER` and `ADMIN`; product management is admin-only
 - Product catalog with search by name
-- Shopping cart management (add, view, remove items)
-- Checkout with inventory validation and pessimistic locking to prevent race conditions
-- Order history
-- Stripe payment intent creation and webhook handling
-- Input validation on all endpoints
-- Global exception handling with structured error responses
+- Shopping cart: add, view, remove items
+- Checkout: creates an order from the cart, checks and reduces stock
+- Order history for the current user
+- Stripe PaymentIntent creation, payment confirmation and webhook handling
+- Request validation and a single error format for all endpoints
+
+## Design Decisions
+
+**Price snapshot in orders.** `order_items` stores the price at the moment of checkout.
+Order history keeps showing what the customer actually paid, even if the product
+price changes later.
+
+**Pessimistic locking on checkout.** Products are loaded with `PESSIMISTIC_WRITE`
+(`SELECT ... FOR UPDATE`) while stock is checked and reduced, so two parallel
+checkouts cannot sell the same last item twice.
+
+**One error format: ProblemDetail (RFC 9457).** Every error is returned as
+`application/problem+json`, including validation errors and the 401/403 responses
+produced by the security filter chain (custom `AuthenticationEntryPoint` and
+`AccessDeniedHandler`). Domain exceptions extend a common `ApiException` that
+carries its HTTP status, grouped into 404 / 409 / 422 base classes. The 500 fallback
+never exposes the exception message to the client.
+
+```json
+{
+  "detail": "Not enough products on the storage",
+  "instance": "/api/orders/checkout",
+  "status": 422,
+  "title": "Unprocessable Content"
+}
+```
+
+**Stripe errors are translated at the service boundary.** `StripeException` is wrapped
+into the application's own exceptions: a Stripe outage becomes `502 Bad Gateway`,
+an invalid webhook signature becomes `400 Bad Request`. Controllers do not depend
+on the Stripe SDK.
+
+**Fewer database queries.** The JWT filter loads the user once per request and the
+services work with that principal instead of loading the user again. All
+`@ManyToOne` associations are `LAZY`, and `spring.jpa.open-in-view` is disabled:
+entities are mapped to DTOs inside transactional services.
 
 ## Getting Started
 
 ### Prerequisites
 
 - Java 21
-- Docker and Docker Compose
+- PostgreSQL running on `localhost:5432` with a database named `e_commerce_api`
+- Docker (only needed for the tests, Testcontainers starts its own PostgreSQL)
 
-### Run with Docker
+### Run locally
 
-1. Clone the repository:
-```bash
-git clone https://github.com/vkhlysta-creator/e-commerce-api.git
-cd e-commerce-api
-```
+1. Set the environment variables:
 
-2. Create a `.env` file in the project root:
-```env
-DB_URL=jdbc:postgresql://db:5432/ecommerce_db
-DB_USERNAME=ecommerce_user
-DB_PASSWORD=your_db_password
+   | Variable                | Required | Notes                                               |
+   |-------------------------|----------|-----------------------------------------------------|
+   | `DB_PASSWORD`           | yes      | password of the PostgreSQL user                     |
+   | `DB_USERNAME`           | no       | defaults to `postgres`                              |
+   | `DB_URL`                | no       | defaults to `jdbc:postgresql://localhost:5432/e_commerce_api` |
+   | `JWT_SECRET`            | no       | Base64 key; a development default is provided       |
+   | `STRIPE_API_KEY`        | no       | Stripe test key; needed only for payment endpoints  |
+   | `STRIPE_WEBHOOK_SECRET` | no       | needed only for the webhook endpoint                |
 
-JWT_SECRET=your_base64_encoded_secret_key
+2. Start the application with the `dev` profile:
 
-STRIPE_API_KEY=sk_test_your_stripe_key
-STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
-```
+   ```bash
+   ./gradlew bootRun --args='--spring.profiles.active=dev'
+   ```
 
-3. Start the application:
-```bash
-docker-compose up --build
-```
+   Flyway creates the schema on startup. The `dev` profile also seeds two users and
+   three products into an empty database and logs SQL statements.
 
-The API will be available at `http://localhost:8080`.
+### Test users (`dev` profile only)
 
-### Run Locally
+| Role  | Email             | Password    |
+|-------|-------------------|-------------|
+| ADMIN | admin@example.com | admin123    |
+| USER  | test@example.com  | password123 |
 
-1. Make sure PostgreSQL is running locally on port `5432` with a database named `e_commerce_api`.
+### API documentation
 
-2. Set the required environment variables:
-```bash
-export DB_PASSWORD=your_password
-export JWT_SECRET=your_base64_encoded_secret
-export STRIPE_API_KEY=sk_test_your_key
-export STRIPE_WEBHOOK_SECRET=whsec_your_secret
-```
-
-3. Run the application:
-```bash
-./gradlew bootRun -Dspring.profiles.active=local
-```
-
-> Running with the `local` profile activates the `DataSeeder`, which populates the database with two test users and three products on first startup.
-
-### Test Credentials (local/dev profile only)
-
-| Role  | Email                 | Password      |
-|-------|-----------------------|---------------|
-| ADMIN | admin@example.com     | admin123      |
-| USER  | test@example.com      | password123   |
-
-## API Documentation
-
-Swagger UI is available at `http://localhost:8080/swagger-ui.html` — all endpoints are documented and can be tested directly from the browser. Use the Authorize button to provide your JWT token.
+Swagger UI: `http://localhost:8080/swagger-ui.html`. Log in via `/api/auth/login`,
+then paste the token into the **Authorize** dialog.
 
 ## API Overview
 
-### Auth — `/api/auth`
-
-| Method | Endpoint            | Access  | Description         |
-|--------|---------------------|---------|---------------------|
-| POST   | `/api/auth/register` | Public | Register a new user |
-| POST   | `/api/auth/login`    | Public | Login, returns JWT  |
-
-### Products — `/api/products`
-
-| Method | Endpoint                        | Access      | Description              |
-|--------|---------------------------------|-------------|--------------------------|
-| GET    | `/api/products`                 | Public      | Get all products         |
-| GET    | `/api/products/{id}`            | Public      | Get product by ID        |
-| GET    | `/api/products/search?query=`   | Public      | Search products by name  |
-| POST   | `/api/products`                 | ADMIN only  | Create a new product     |
-| PUT    | `/api/products/{id}`            | ADMIN only  | Update a product         |
-| DELETE | `/api/products/{id}`            | ADMIN only  | Delete a product         |
-
-### Cart — `/api/cart`
-
-| Method | Endpoint                    | Access         | Description                  |
-|--------|-----------------------------|----------------|------------------------------|
-| GET    | `/api/cart`                 | Authenticated  | View current cart            |
-| POST   | `/api/cart/add`             | Authenticated  | Add a product to cart        |
-| DELETE | `/api/cart/{productId}`     | Authenticated  | Remove a product from cart   |
-
-### Orders — `/api/orders`
-
-| Method | Endpoint              | Access         | Description                          |
-|--------|-----------------------|----------------|--------------------------------------|
-| POST   | `/api/orders/checkout`| Authenticated  | Place an order from current cart     |
-| GET    | `/api/orders`         | Authenticated  | Get current user's order history     |
-
-### Payments — `/api/payments`
-
-| Method | Endpoint                              | Access         | Description                          |
-|--------|---------------------------------------|----------------|--------------------------------------|
-| POST   | `/api/payments/create-intent/{orderId}` | Authenticated | Create a Stripe PaymentIntent      |
-| POST   | `/api/payments/confirm`               | Authenticated  | Confirm a payment by intent ID       |
-| POST   | `/api/payments/webhook`               | Public         | Stripe webhook handler               |
+| Method | Endpoint                                | Access        | Description                    |
+|--------|-----------------------------------------|---------------|--------------------------------|
+| POST   | `/api/auth/register`                    | public        | Register, returns a JWT        |
+| POST   | `/api/auth/login`                       | public        | Log in, returns a JWT          |
+| GET    | `/api/products`                         | public        | List products                  |
+| GET    | `/api/products/{id}`                    | public        | Get a product                  |
+| GET    | `/api/products/search?query=`           | public        | Search products by name        |
+| POST   | `/api/products`                         | ADMIN         | Create a product               |
+| PUT    | `/api/products/{id}`                    | ADMIN         | Update a product               |
+| DELETE | `/api/products/{id}`                    | ADMIN         | Delete a product               |
+| GET    | `/api/cart`                             | authenticated | View the cart                  |
+| POST   | `/api/cart/add`                         | authenticated | Add a product to the cart      |
+| DELETE | `/api/cart/{productId}`                 | authenticated | Remove a product from the cart |
+| POST   | `/api/orders/checkout`                  | authenticated | Create an order from the cart  |
+| GET    | `/api/orders`                           | authenticated | Order history                  |
+| POST   | `/api/payments/create-intent/{orderId}` | authenticated | Create a Stripe PaymentIntent  |
+| POST   | `/api/payments/confirm`                 | authenticated | Confirm a payment              |
+| POST   | `/api/payments/webhook`                 | Stripe        | Stripe webhook (signature checked) |
 
 ## Database Schema
 
 ```
-users
-  id, email (unique), password, role
-
-products
-  id, name, description, price, inventory
-
-cart_items
-  id, quantity, user_id → users, product_id → products
-
-orders
-  id, total_price, status, created_at, user_id → users
-
-order_items
-  id, quantity, price, order_id → orders, product_id → products
+users        id, email (unique), password, role
+products     id, name, description, price, inventory
+cart_items   id, quantity, user_id → users, product_id → products
+orders       id, total_price, status, created_at, user_id → users
+order_items  id, quantity, price, order_id → orders, product_id → products
 ```
 
-Schema is managed by Flyway — migrations are in `src/main/resources/db/migration/`.
+Migrations live in `src/main/resources/db/migration/`.
 
-## Running Tests
+## Tests
 
 ```bash
 ./gradlew test
 ```
 
-Integration tests use Testcontainers to spin up a real PostgreSQL instance — no manual setup required. Docker must be running.
+The suite (about 50 tests) has three layers:
+
+- **Unit tests** for services with Mockito, including Stripe calls mocked with `mockStatic`
+- **Web layer tests** with `@WebMvcTest` and the real security configuration:
+  status codes, validation errors, the ProblemDetail format, 401 vs 403
+- **Integration tests** with Testcontainers PostgreSQL: repositories, and a full
+  checkout over HTTP with a real JWT
+
+Docker must be running for the integration tests.
+
+## Known Limitations
+
+This is a learning project; these points are known and not solved yet:
+
+- Deleting a product that is referenced by an order fails with a database
+  constraint error. The planned fix is a soft delete.
+- Order history loads order items and products with extra queries (N+1);
+  a `JOIN FETCH` or batch fetching would fix it.
+- No pagination on product and order lists.
+- Some endpoints do not follow REST conventions yet
+  (`POST /api/cart/add`, product creation returns `200` instead of `201`).
+- The Docker setup (`Dockerfile`, `docker-compose.yml`) is work in progress
+  and not ready to use.
+- No CI pipeline and no deployment yet.
 
 ## Project Structure
 
 ```
 src/main/java/org/example/ecommerceapi/
-├── config/          — DataSeeder, OpenAPI config
-├── controller/      — REST controllers
-├── dto/             — Request/response records
-├── exception/       — Custom exceptions + global handler
-├── model/           — JPA entities
-├── repository/      — Spring Data JPA repositories
-├── security/        — JWT filter, JwtService, SecurityConfig
-└── service/         — Business logic
+├── config/       DataSeeder, OpenAPI configuration
+├── controller/   REST controllers
+├── dto/          request and response records
+├── exception/    exception hierarchy and global handler
+├── model/        JPA entities
+├── repository/   Spring Data repositories
+├── security/     JWT filter, JwtService, security configuration and handlers
+└── service/      business logic
 ```
