@@ -2,6 +2,7 @@ package org.example.ecommerceapi.security;
 
 
 import io.jsonwebtoken.security.SignatureException;
+import org.example.ecommerceapi.config.SecurityTestConfig;
 import org.example.ecommerceapi.controller.CartController;
 import org.example.ecommerceapi.controller.ProductController;
 import org.example.ecommerceapi.model.User;
@@ -23,7 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest({CartController.class, ProductController.class})
-@Import({SecurityConfig.class, CustomAuthenticationEntryPoint.class})
+@Import(SecurityTestConfig.class)
 public class SecurityConfigTest {
     @Autowired
     private MockMvc mockMvc;

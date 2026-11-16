@@ -1,10 +1,9 @@
 package org.example.ecommerceapi.controller;
 
+import org.example.ecommerceapi.config.SecurityTestConfig;
 import org.example.ecommerceapi.model.User;
 import org.example.ecommerceapi.model.enums.Role;
-import org.example.ecommerceapi.security.CustomAuthenticationEntryPoint;
 import org.example.ecommerceapi.security.JwtService;
-import org.example.ecommerceapi.security.SecurityConfig;
 import org.example.ecommerceapi.service.CartService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(CartController.class)
-@Import({SecurityConfig.class, CustomAuthenticationEntryPoint.class})
+@Import(SecurityTestConfig.class)
 public class CartControllerTest {
     @Autowired
     private MockMvc mockMvc;

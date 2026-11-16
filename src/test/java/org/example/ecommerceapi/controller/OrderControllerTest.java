@@ -1,13 +1,12 @@
 package org.example.ecommerceapi.controller;
 
+import org.example.ecommerceapi.config.SecurityTestConfig;
 import org.example.ecommerceapi.dto.OrderDto;
 import org.example.ecommerceapi.exception.OutOfStockException;
 import org.example.ecommerceapi.model.User;
 import org.example.ecommerceapi.model.enums.OrderStatus;
 import org.example.ecommerceapi.model.enums.Role;
-import org.example.ecommerceapi.security.CustomAuthenticationEntryPoint;
 import org.example.ecommerceapi.security.JwtService;
-import org.example.ecommerceapi.security.SecurityConfig;
 import org.example.ecommerceapi.service.OrderService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +27,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @WebMvcTest(OrderController.class)
-@Import({SecurityConfig.class, CustomAuthenticationEntryPoint.class})
+@Import(SecurityTestConfig.class)
 public class OrderControllerTest {
 
     @Autowired
