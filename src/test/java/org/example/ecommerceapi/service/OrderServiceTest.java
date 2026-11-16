@@ -34,8 +34,6 @@ public class OrderServiceTest {
     @Mock
     private OrderRepository orderRepository;
 
-    @Mock
-    private UserRepository userRepository;
 
     @Mock
     private CartItemRepository cartItemRepository;
@@ -57,13 +55,12 @@ public class OrderServiceTest {
         CartItem firstCartItem = new CartItem(3, mockedUser, mockedFirstProduct);
         CartItem secondCartItem = new CartItem(5, mockedUser, mockedSecondProduct);
         List<CartItem> items = List.of(firstCartItem, secondCartItem);
-        when(userRepository.getUserByEmail(mockedUser.getUsername())).thenReturn(Optional.of(mockedUser));
         when(cartItemRepository.getCartItemsByUser(mockedUser)).thenReturn(items);
         when(productRepository.findByIdWithLock(mockedFirstProduct.getId())).thenReturn(Optional.of(mockedFirstProduct));
         when(productRepository.findByIdWithLock(mockedSecondProduct.getId())).thenReturn(Optional.of(mockedSecondProduct));
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        OrderDto dto = orderService.checkout(mockedUser.getUsername());
+        OrderDto dto = orderService.checkout(mockedUser);
 
         assertThat(dto).isNotNull();
         assertThat(dto.items().size()).isEqualTo(2);
@@ -81,10 +78,9 @@ public class OrderServiceTest {
     public void  checkout_With_Empty_Cart(){
         User mockedUser = createStandardUser(1L, "test-email", "test-password", Role.USER);
         List<CartItem> items = List.of();
-        when(userRepository.getUserByEmail(mockedUser.getUsername())).thenReturn(Optional.of(mockedUser));
         when(cartItemRepository.getCartItemsByUser(mockedUser)).thenReturn(items);
 
-        EmptyCartException exception = assertThrows(EmptyCartException.class, () -> orderService.checkout(mockedUser.getUsername()));
+        EmptyCartException exception = assertThrows(EmptyCartException.class, () -> orderService.checkout(mockedUser));
         assertThat(exception.getMessage()).contains("Cart is empty!");
 
     }
@@ -95,11 +91,10 @@ public class OrderServiceTest {
         Product mockedFirstProduct = createStandardProduct(1L, "test-product-A", "test-product-A", BigDecimal.valueOf(100), 2);
         CartItem cartItem = new CartItem(5, mockedUser, mockedFirstProduct);
 
-        when(userRepository.getUserByEmail(mockedUser.getUsername())).thenReturn(Optional.of(mockedUser));
         when(productRepository.findByIdWithLock(mockedFirstProduct.getId())).thenReturn(Optional.of(mockedFirstProduct));
         when(cartItemRepository.getCartItemsByUser(mockedUser)).thenReturn(List.of(cartItem));
 
-        OutOfStockException outOfStockException = assertThrows(OutOfStockException.class, () -> orderService.checkout(mockedUser.getUsername()));
+        OutOfStockException outOfStockException = assertThrows(OutOfStockException.class, () -> orderService.checkout(mockedUser));
         assertThat(outOfStockException.getMessage()).contains("Not enough products on the storage");
         verify(orderRepository, never()).save(any());
         verify(cartItemRepository, never()).deleteAll(any());
@@ -114,10 +109,9 @@ public class OrderServiceTest {
         OrderItem orderItem = new OrderItem(1, BigDecimal.valueOf(100), order, product);
         order.addItem(orderItem);
 
-        when(userRepository.getUserByEmail(anyString())).thenReturn(Optional.of(user));
         when(orderRepository.findAllByUserOrderByCreatedAtDesc(user)).thenReturn(List.of(order));
 
-        List<OrderDto> orderItemDto = orderService.getMyOrders(user.getUsername());
+        List<OrderDto> orderItemDto = orderService.getMyOrders(user);
         BigDecimal priceOfFirstOrderItem = orderItemDto
                 .getFirst()
                 .items()

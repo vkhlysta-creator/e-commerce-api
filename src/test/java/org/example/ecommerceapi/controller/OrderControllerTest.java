@@ -47,14 +47,14 @@ public class OrderControllerTest {
     void checkout_ReturnsOk_WhenUserIsAuthenticated() throws Exception {
         User customer = new User("buyer@gmail.com", "test-password", Role.USER);
         OrderDto orderDto = new OrderDto(10L, BigDecimal.valueOf(500), OrderStatus.PENDING, LocalDateTime.now(), List.of());
-        when(orderService.checkout(customer.getUsername())).thenReturn(orderDto);
+        when(orderService.checkout(customer)).thenReturn(orderDto);
 
         mockMvc.perform(post("/api/orders/checkout").with(user(customer)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(10))
                 .andExpect(jsonPath("$.status").value("PENDING"));
 
-        verify(orderService, times(1)).checkout(customer.getUsername());
+        verify(orderService, times(1)).checkout(customer);
 
     }
 
@@ -69,7 +69,7 @@ public class OrderControllerTest {
     @Test
     void checkout_OutOfStock_ReturnsProblemDetail422() throws Exception{
         User customer = new User("buyer@gmail.com", "test-password", Role.USER);
-        when(orderService.checkout(customer.getUsername())).thenThrow(new OutOfStockException("Not enough products on the storage"));
+        when(orderService.checkout(customer)).thenThrow(new OutOfStockException("Not enough products on the storage"));
 
         mockMvc.perform(post("/api/orders/checkout").with(user(customer)))
                 .andExpect(status().isUnprocessableContent())

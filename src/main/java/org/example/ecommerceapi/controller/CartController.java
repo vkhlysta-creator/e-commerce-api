@@ -22,7 +22,7 @@ public class CartController {
 
     @GetMapping()
     public ResponseEntity<CartDto> getCart(@AuthenticationPrincipal User user){
-        return ResponseEntity.ok(cartService.getCart(user.getUsername()));
+        return ResponseEntity.ok(cartService.getCart(user));
     }
 
     @PostMapping("/add")
@@ -30,7 +30,7 @@ public class CartController {
             @AuthenticationPrincipal User user,
             @Valid @RequestBody CartItemRequest request
             ){
-        return ResponseEntity.status(HttpStatus.CREATED).body(cartService.addProductToCart(user.getUsername(), request.productId(), request.quantity()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(cartService.addProductToCart(user, request.productId(), request.quantity()));
     }
 
     @DeleteMapping("/{productId}")
@@ -38,7 +38,7 @@ public class CartController {
             @AuthenticationPrincipal User user,
             @PathVariable Long productId
     ){
-        cartService.removeProductFromCart(user.getUsername(), productId);
+        cartService.removeProductFromCart(user, productId);
         return ResponseEntity.noContent().build();
     }
 
