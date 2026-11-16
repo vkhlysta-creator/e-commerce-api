@@ -18,6 +18,9 @@ import tools.jackson.databind.ObjectMapper;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.containsString;
 
 @WebMvcTest(AuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -112,24 +115,49 @@ public class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message").value("Invalid email or password"));
+                .andExpect(jsonPath("$.detail").value("Invalid email or password"));
 
         verify(authService, times(1)).authenticate(request);
     }
 
     @Test
-    void login_WithoutEmail_ReturnsBadRequest() throws Exception{
+    void login_WithoutEmail_ReturnsBadRequest() throws Exception {
 
         mockMvc.perform(post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"password\": \"password123\"}"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"password\": \"password123\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.infos.email").exists());
+                .andExpect(jsonPath("$.errors.email").exists());
 
         verify(authService, never()).authenticate(any());
 
     }
 
+    @Test
+    void login_BlankEmail_ReturnsAllFieldErrors() throws Exception {
+        LoginRequest request = new LoginRequest("  ", "test-password");
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.email", hasSize(2)));
+
+        verify(authService, never()).authenticate(any());
+    }
+
+    @Test
+    void login_InternalError_ReturnsInternalServerError() throws Exception {
+        LoginRequest request = new LoginRequest("test-email@gmail.com", "test-password");
+        when(authService.authenticate(request)).thenThrow(new RuntimeException("Secret Info: DB-PASS: 1xWrtaxt234T"));
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().string(not(containsString("Secret Info: DB-PASS: 1xWrtaxt234T"))));
+
+    }
 
 
 }

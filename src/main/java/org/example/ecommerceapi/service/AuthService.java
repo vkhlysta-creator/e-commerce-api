@@ -3,6 +3,7 @@ package org.example.ecommerceapi.service;
 import org.example.ecommerceapi.dto.AuthResponse;
 import org.example.ecommerceapi.dto.LoginRequest;
 import org.example.ecommerceapi.dto.RegisterRequest;
+import org.example.ecommerceapi.exception.EmailAlreadyRegisteredException;
 import org.example.ecommerceapi.exception.UserNotFoundException;
 import org.example.ecommerceapi.model.User;
 import org.example.ecommerceapi.model.enums.Role;
@@ -34,7 +35,7 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
         Optional<User> foundUser = userRepository.getUserByEmail(request.email());
         if (foundUser.isPresent()) {
-            throw new IllegalArgumentException("User with such an email is already registered!");
+            throw new EmailAlreadyRegisteredException();
         }
 
         User newUser = new User(request.email(), encoder.encode(request.password()), Role.USER);

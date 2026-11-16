@@ -3,6 +3,7 @@ package org.example.ecommerceapi.service;
 import org.example.ecommerceapi.dto.AuthResponse;
 import org.example.ecommerceapi.dto.LoginRequest;
 import org.example.ecommerceapi.dto.RegisterRequest;
+import org.example.ecommerceapi.exception.EmailAlreadyRegisteredException;
 import org.example.ecommerceapi.model.User;
 import org.example.ecommerceapi.model.enums.Role;
 import org.example.ecommerceapi.repository.UserRepository;
@@ -67,7 +68,7 @@ public class AuthServiceTest {
 
         when(userRepository.getUserByEmail(registerRequest.email())).thenReturn(Optional.of(new User(registerRequest.email(), "encoded-password", Role.USER)));
 
-        assertThrows(IllegalArgumentException.class, () -> authService.register(registerRequest));
+        assertThrows(EmailAlreadyRegisteredException.class, () -> authService.register(registerRequest));
         verify(passwordEncoder, never()).encode(anyString());
         verify(userRepository, never()).save(any(User.class));
         verify(jwtService, never()).generateToken(any(User.class));

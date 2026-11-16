@@ -2,6 +2,7 @@ package org.example.ecommerceapi.service;
 
 import org.example.ecommerceapi.dto.OrderDto;
 import org.example.ecommerceapi.dto.OrderItemDto;
+import org.example.ecommerceapi.exception.EmptyCartException;
 import org.example.ecommerceapi.exception.OutOfStockException;
 import org.example.ecommerceapi.exception.ProductNotFoundException;
 import org.example.ecommerceapi.exception.UserNotFoundException;
@@ -44,7 +45,7 @@ public class OrderService {
 
         List<CartItem> items = cartItemRepository.getCartItemsByUser(fetchedUser);
         if (items.isEmpty()) {
-            throw new IllegalStateException("Cart is empty!");
+            throw new EmptyCartException();
         }
 
         BigDecimal totalPrice = BigDecimal.ZERO;

@@ -1,78 +1,41 @@
 package org.example.ecommerceapi.exception;
 
-import org.example.ecommerceapi.dto.ErrorDto;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.jspecify.annotations.Nullable;
+import org.springframework.http.*;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestControllerAdvice
-public class GeneralExceptionHandler {
+public class GeneralExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorDto> handleValidationException(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(e -> errors.put(e.getField(), e.getDefaultMessage()));
-        return ResponseEntity.badRequest().body(
-                new ErrorDto(
-                        LocalDateTime.now(),
-                        HttpStatus.BAD_REQUEST,
-                        "Validation failed",
-                        errors
-                )
-        );
+    @Override
+    protected @Nullable ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        Map<String, List<String>> errors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(error -> errors.computeIfAbsent(error.getField(), key -> new ArrayList<>()).add(error.getDefaultMessage()));
+        ex.getBody().setProperty("errors", errors);
+        return super.handleMethodArgumentNotValid(ex, headers, status, request);
     }
 
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorDto> fallbackHandleException(Exception ex) {
+    public ProblemDetail fallbackHandleException(Exception ex) {
         ex.printStackTrace();
-        return createResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error");
+        return ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<ErrorDto> handleAuthenticationException() {
-        return createResponse(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+    public ProblemDetail handleAuthenticationException() {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Invalid email or password" );
     }
 
-    @ExceptionHandler(OutOfStockException.class)
-    public ResponseEntity<ErrorDto> handleOutOfStockException(OutOfStockException ex) {
-        return createResponse(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessage());
-    }
 
-    @ExceptionHandler({ProductNotFoundException.class, UserNotFoundException.class, CartItemNotFoundException.class})
-    public ResponseEntity<Void> handleProductNotFoundException(Exception ex) {
-        return ResponseEntity.notFound().build();
-    }
-
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ErrorDto> handleIllegalState(IllegalStateException ex) {
-        return createResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorDto> handleIllegalArgument(IllegalArgumentException ex) {
-        return createResponse(HttpStatus.CONFLICT, ex.getMessage());
-    }
-
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ErrorDto> handleHttpMessageNotReadableException(HttpMessageNotReadableException exception){
-        return createResponse(HttpStatus.BAD_REQUEST, "Body of Request missing or containing invalid JSON");
-    }
-
-    private ResponseEntity<ErrorDto> createResponse(HttpStatus httpStatus, String message){
-        return ResponseEntity.status(httpStatus).body(
-                new ErrorDto(
-                        LocalDateTime.now(),
-                        httpStatus,
-                        message
-                )
-        );
-    }
 }

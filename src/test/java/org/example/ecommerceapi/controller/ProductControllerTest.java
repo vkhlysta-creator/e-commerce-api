@@ -1,13 +1,12 @@
 package org.example.ecommerceapi.controller;
 
+import org.example.ecommerceapi.config.SecurityTestConfig;
 import org.example.ecommerceapi.dto.ProductRequest;
 import org.example.ecommerceapi.dto.ProductResponse;
 import org.example.ecommerceapi.exception.ProductNotFoundException;
 import org.example.ecommerceapi.model.User;
 import org.example.ecommerceapi.model.enums.Role;
-import org.example.ecommerceapi.security.CustomAuthenticationEntryPoint;
 import org.example.ecommerceapi.security.JwtService;
-import org.example.ecommerceapi.security.SecurityConfig;
 import org.example.ecommerceapi.service.ProductService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +26,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ProductController.class)
-@Import({SecurityConfig.class, CustomAuthenticationEntryPoint.class})
+@Import(SecurityTestConfig.class)
 public class ProductControllerTest {
 
     @Autowired
@@ -62,7 +61,9 @@ public class ProductControllerTest {
         when(productService.findById(999L)).thenThrow(new ProductNotFoundException("Not Found"));
 
         mockMvc.perform(get("/api/products/{id}", 999L))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.detail").exists());
     }
 
     @Test
@@ -75,10 +76,10 @@ public class ProductControllerTest {
                         post("/api/products").with(user(adminUser)).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Validation failed"))
-                .andExpect(jsonPath("$.infos.name").exists())
-                .andExpect(jsonPath("$.infos.price").exists())
-                .andExpect(jsonPath("$.infos.inventory").exists());
+                .andExpect(jsonPath("$.detail").value("Invalid request content."))
+                .andExpect(jsonPath("$.errors.name").exists())
+                .andExpect(jsonPath("$.errors.price").exists())
+                .andExpect(jsonPath("$.errors.inventory").exists());
 
         verify(productService, never()).createNewProduct(any());
 

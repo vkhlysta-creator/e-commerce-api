@@ -2,6 +2,7 @@ package org.example.ecommerceapi.security;
 
 
 import io.jsonwebtoken.security.SignatureException;
+import org.example.ecommerceapi.config.SecurityTestConfig;
 import org.example.ecommerceapi.controller.CartController;
 import org.example.ecommerceapi.controller.ProductController;
 import org.example.ecommerceapi.model.User;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -22,7 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest({CartController.class, ProductController.class})
-@Import({SecurityConfig.class, CustomAuthenticationEntryPoint.class})
+@Import(SecurityTestConfig.class)
 public class SecurityConfigTest {
     @Autowired
     private MockMvc mockMvc;
@@ -44,7 +46,10 @@ public class SecurityConfigTest {
     public void getCart_NoToken_Returns401() throws Exception {
         mockMvc.perform(get("/api/cart"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message").value("Unauthorized"));
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.detail").exists())
+                .andExpect(jsonPath("$.instance").value("/api/cart"))
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON));
     }
 
     @Test
@@ -52,7 +57,8 @@ public class SecurityConfigTest {
         when(jwtService.extractUsername("invalid-token")).thenThrow(new SignatureException(""));
 
         mockMvc.perform(get("/api/cart").header("Authorization", "Bearer invalid-token"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.instance").value("/api/cart"));
 
         verify(jwtService, times(1)).extractUsername("invalid-token");
         verify(userDetailsService, never()).loadUserByUsername(anyString());
@@ -76,7 +82,11 @@ public class SecurityConfigTest {
         when(jwtService.isTokenValid("valid-token", user)).thenReturn(true);
 
         mockMvc.perform(post("/api/products").header("Authorization", "Bearer valid-token"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.detail").value("You don't have permission to access this resource"))
+                .andExpect(jsonPath("$.instance").value("/api/products"))
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON));
 
         verify(userDetailsService, times(1)).loadUserByUsername(user.getUsername());
     }
