@@ -48,6 +48,7 @@ public class SecurityConfigTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.detail").exists())
+                .andExpect(jsonPath("$.instance").value("/api/cart"))
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON));
     }
 
@@ -56,7 +57,8 @@ public class SecurityConfigTest {
         when(jwtService.extractUsername("invalid-token")).thenThrow(new SignatureException(""));
 
         mockMvc.perform(get("/api/cart").header("Authorization", "Bearer invalid-token"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.instance").value("/api/cart"));
 
         verify(jwtService, times(1)).extractUsername("invalid-token");
         verify(userDetailsService, never()).loadUserByUsername(anyString());
@@ -80,7 +82,11 @@ public class SecurityConfigTest {
         when(jwtService.isTokenValid("valid-token", user)).thenReturn(true);
 
         mockMvc.perform(post("/api/products").header("Authorization", "Bearer valid-token"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.detail").value("You don't have permission to access this resource"))
+                .andExpect(jsonPath("$.instance").value("/api/products"))
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON));
 
         verify(userDetailsService, times(1)).loadUserByUsername(user.getUsername());
     }
