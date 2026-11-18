@@ -32,9 +32,10 @@ payments through Stripe (test mode).
 Order history keeps showing what the customer actually paid, even if the product
 price changes later.
 
-**Pessimistic locking on checkout.** Products are loaded with `PESSIMISTIC_WRITE`
-(`SELECT ... FOR UPDATE`) while stock is checked and reduced, so two parallel
-checkouts cannot sell the same last item twice.
+**Pessimistic locking on checkout.** Products are locked with `PESSIMISTIC_WRITE`
+(`SELECT ... FOR UPDATE`) while stock is checked and reduced, so that two parallel
+checkouts do not sell the same last item twice. The current implementation has a
+known flaw, see [Known Limitations](#known-limitations).
 
 **One error format: ProblemDetail (RFC 9457).** Every error is returned as
 `application/problem+json`, including validation errors and the 401/403 responses
@@ -60,7 +61,8 @@ on the Stripe SDK.
 **Fewer database queries.** The JWT filter loads the user once per request and the
 services work with that principal instead of loading the user again. All
 `@ManyToOne` associations are `LAZY`, and `spring.jpa.open-in-view` is disabled:
-entities are mapped to DTOs inside transactional services.
+entities are mapped to DTOs inside transactional services. Order history loads
+orders, their items and products in one query with `@EntityGraph`.
 
 ## Getting Started
 
@@ -159,8 +161,11 @@ This is a learning project; these points are known and not solved yet:
 
 - Deleting a product that is referenced by an order fails with a database
   constraint error. The planned fix is a soft delete.
-- Order history loads order items and products with extra queries (N+1);
-  a `JOIN FETCH` or batch fetching would fix it.
+- The checkout lock can read stale stock: the cart query already loads the
+  products into the persistence context, and Hibernate returns these cached
+  instances from the locking query instead of the fresh row. The lock itself is
+  taken, but the stock value may be outdated. The planned fix is
+  `EntityManager.refresh(product, PESSIMISTIC_WRITE)` with a regression test.
 - No pagination on product and order lists.
 - Some endpoints do not follow REST conventions yet
   (`POST /api/cart/add`, product creation returns `200` instead of `201`).
